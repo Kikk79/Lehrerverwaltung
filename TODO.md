@@ -207,27 +207,27 @@
 
 ### Configuration
 
-- [ ] **SET-001**: Create Settings storage using SQLite
-- [ ] **SET-002**: Implement API key secure storage
-- [ ] **SET-003**: Add model selection dropdown
-- [ ] **SET-004**: Create system prompt editor
-- [ ] **SET-005**: Implement settings validation
+- [x] **SET-001**: Create Settings storage using SQLite ✅
+- [x] **SET-002**: Implement API key secure storage ✅
+- [x] **SET-003**: Add model selection dropdown ✅
+- [x] **SET-004**: Create system prompt editor ✅
+- [x] **SET-005**: Implement settings validation ✅
 
 ### Preferences
 
-- [ ] **SET-006**: Add calendar display preferences
-- [ ] **SET-007**: Create theme selection options
-- [ ] **SET-008**: Implement language localization support
-- [ ] **SET-009**: Add data backup preferences
-- [ ] **SET-010**: Create settings import/export
+- [x] **SET-006**: Add calendar display preferences ✅
+- [x] **SET-007**: Create theme selection options ✅
+- [x] **SET-008**: Implement language localization support ✅
+- [x] **SET-009**: Add data backup preferences ✅
+- [x] **SET-010**: Create settings import/export ✅
 
 ### AI Weighting Settings
 
-- [ ] **SET-011**: Create WeightingSettings storage and management
-- [ ] **SET-012**: Implement default weighting profiles (Normal, Emergency, Balanced)
-- [ ] **SET-013**: Add weighting settings validation and constraints
-- [ ] **SET-014**: Create user-defined weighting presets functionality
-- [ ] **SET-015**: Implement weighting settings history and undo capability
+- [x] **SET-011**: Create WeightingSettings storage and management ✅
+- [x] **SET-012**: Implement default weighting profiles (Normal, Emergency, Balanced) ✅
+- [x] **SET-013**: Add weighting settings validation and constraints ✅
+- [x] **SET-014**: Create user-defined weighting presets functionality ✅
+- [x] **SET-015**: Implement weighting settings history and undo capability ✅
 
 ---
 
