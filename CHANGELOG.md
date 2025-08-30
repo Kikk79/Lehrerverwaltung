@@ -10,6 +10,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] 🚧
 
 ### Added
+- **🤖 AI Weighting System Features**
+  - Configurable AI weighting system for assignment optimization (AI-011 to AI-015)
+  - Three weighting parameters: Gleichmäßigkeit (equal distribution), Kontinuität (lesson continuity), Lehrertreue (teacher-class loyalty)
+  - Interactive chat interface for AI communication and special case handling (AI-016 to AI-020)
+  - WeightingService and ChatService classes for managing advanced AI features
+  - Extended database schema with weighting_settings and chat_history tables
+
+- **🎨 Enhanced UI Components**
+  - WeightingPanel component with three configurable sliders (UI-015)
+  - ChatInterface component for real-time AI communication (UI-016)
+  - WeightingPresets for quick configuration scenarios (UI-017)
+  - ChatHistory component with conversation management (UI-018)
+  - WeightingVisualization to show impact of settings (UI-019)
+  - ChatPromptSuggestions for common special cases (UI-020)
+
+- **⚙️ Advanced Settings Management**
+  - WeightingSettings storage and management (SET-011)
+  - Default weighting profiles (Normal, Emergency, Balanced) (SET-012)
+  - User-defined weighting presets functionality (SET-014)
+  - Settings validation and history capabilities (SET-013, SET-015)
+
+### Added (Previous Work)
 - **🗃️ Complete SQLite Database Layer**
   - better-sqlite3 integration with Node.js 24.x and Electron compatibility
   - Complete database schema with all core tables (teachers, courses, assignments, app_settings)
@@ -75,11 +97,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✅ **TYPES-001 & UTILS-001**: Complete type system and utility functions implemented
 - ✅ **BUILD-001**: Electron app successfully builds and launches
 - ✅ **DB-001 to DB-014**: Complete database layer with SQLite integration
+- ✅ **Documentation Enhanced**: AI weighting system and chat interface features planned
 - ✅ React renderer with Tailwind CSS working correctly
 - ✅ TypeScript compilation and type checking functional
 - ✅ Database operations tested and working in Electron environment
-- 🔄 Ready for UI component development (UI-001 to UI-014)
-- 🔄 Ready for parallel development of AI, Calendar, and File operations
+- 🔄 Ready for UI component development (UI-001 to UI-020)
+- 🔄 Ready for parallel development of enhanced AI, Calendar, and File operations
 
 ### Next Milestones
 - 🎯 **UI Milestone**: Create React components for teacher and course management  
@@ -129,6 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Major Features | TODO Items | Git Commits |
 |---------|------|----------------|------------|-------------|
+| 0.4.0   | 2025-08-30 | AI weighting system & chat interface features specification | 15+ new tasks defined | fed3554 |
 | 0.3.0   | 2025-08-30 | Complete SQLite database layer implementation | 14+ tasks completed | b5eb655 |
 | 0.2.0   | 2025-08-30 | Complete Electron + React + TypeScript infrastructure | 15+ tasks completed | 98d3878 |
 | 0.1.0   | 2025-08-30 | Project planning & documentation | 90+ tasks defined | Initial setup |
@@ -138,10 +162,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Development Notes 📋
 
 ### Current Status
-- **Phase**: Database Layer Complete ✅ → Core Features Development 🔄
-- **Last Commit**: b5eb655 - Complete SQLite database layer implementation
-- **Completed Tasks**: DB-001 to DB-014 (All database functionality implemented)
-- **Ready for Parallel**: UI components, AI integration, Calendar implementation
+- **Phase**: Enhanced Feature Planning Complete ✅ → Core Features Development 🔄
+- **Last Commit**: fed3554 - AI weighting system and chat interface features
+- **Completed Tasks**: Documentation enhanced with advanced AI features (15+ new tasks)
+- **Ready for Parallel**: Enhanced UI components (UI-001 to UI-020), Advanced AI integration (AI-001 to AI-020), Calendar implementation
 
 ### Key Milestones
 1. ✅ **Project Planning**: Documentation and task breakdown
