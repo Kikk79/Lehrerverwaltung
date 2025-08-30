@@ -90,12 +90,12 @@ export function validateTeacher(teacher: Partial<Teacher>): string[] {
     errors.push('Teacher name is required');
   }
   
-  if (!teacher.skills || teacher.skills.length === 0) {
-    errors.push('At least one skill is required');
+  if (!teacher.qualifications || teacher.qualifications.length === 0) {
+    errors.push('At least one qualification is required');
   }
   
-  if (teacher.skills?.some((skill: string) => !skill.trim())) {
-    errors.push('All skills must be non-empty');
+  if (teacher.qualifications?.some((qualification: string) => !qualification.trim())) {
+    errors.push('All qualifications must be non-empty');
   }
   
   return errors;
@@ -132,7 +132,7 @@ export function validateCourse(course: Partial<Course>): string[] {
 }
 
 export function canTeachCourse(teacher: Teacher, course: Course): boolean {
-  return teacher.skills.includes(course.topic);
+  return teacher.qualifications.includes(course.topic);
 }
 
 export function getConflictingSLots(assignments: Assignment[]): TimeSlot[] {

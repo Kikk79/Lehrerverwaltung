@@ -61,13 +61,13 @@ export class DatabaseService {
    */
   public createTeacher(teacher: Omit<Teacher, 'id' | 'created_at'>): Teacher {
     const stmt = this.db.prepare(`
-      INSERT INTO teachers (name, skills, working_times)
+      INSERT INTO teachers (name, qualifications, working_times)
       VALUES (?, ?, ?)
     `);
     
     const result = stmt.run(
       teacher.name,
-      JSON.stringify(teacher.skills),
+      JSON.stringify(teacher.qualifications),
       JSON.stringify(teacher.working_times)
     );
 
@@ -86,7 +86,7 @@ export class DatabaseService {
     return {
       id: row.id,
       name: row.name,
-      skills: JSON.parse(row.skills),
+      qualifications: JSON.parse(row.qualifications),
       working_times: JSON.parse(row.working_times || '{}'),
       created_at: row.created_at
     };
@@ -102,7 +102,7 @@ export class DatabaseService {
     return rows.map(row => ({
       id: row.id,
       name: row.name,
-      skills: JSON.parse(row.skills),
+      qualifications: JSON.parse(row.qualifications),
       working_times: JSON.parse(row.working_times || '{}'),
       created_at: row.created_at
     }));
@@ -117,13 +117,13 @@ export class DatabaseService {
 
     const stmt = this.db.prepare(`
       UPDATE teachers 
-      SET name = ?, skills = ?, working_times = ?
+      SET name = ?, qualifications = ?, working_times = ?
       WHERE id = ?
     `);
     
     stmt.run(
       updates.name ?? currentTeacher.name,
-      JSON.stringify(updates.skills ?? currentTeacher.skills),
+      JSON.stringify(updates.qualifications ?? currentTeacher.qualifications),
       JSON.stringify(updates.working_times ?? currentTeacher.working_times),
       id
     );

@@ -7,20 +7,20 @@ PRAGMA foreign_keys = ON;
 -- Set WAL mode for better performance
 PRAGMA journal_mode = WAL;
 
--- Teachers table with skills and availability
+-- Teachers table with qualifications and availability
 CREATE TABLE IF NOT EXISTS teachers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    skills TEXT NOT NULL,        -- JSON array of skill strings
+    qualifications TEXT NOT NULL,        -- JSON array of qualification strings
     working_times TEXT,          -- JSON object for availability
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Courses requiring specific skills
+-- Courses requiring specific qualifications
 CREATE TABLE IF NOT EXISTS courses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    topic TEXT NOT NULL,         -- Must match teacher skills exactly
+    topic TEXT NOT NULL,         -- Must match teacher qualifications exactly
     lessons_count INTEGER NOT NULL,
     lesson_duration INTEGER NOT NULL,  -- Minutes per lesson
     start_date DATE NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
 );
 
 -- Indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_teachers_skills ON teachers(skills);
+CREATE INDEX IF NOT EXISTS idx_teachers_qualifications ON teachers(qualifications);
 CREATE INDEX IF NOT EXISTS idx_courses_topic ON courses(topic);
 CREATE INDEX IF NOT EXISTS idx_assignments_teacher ON assignments(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_assignments_course ON assignments(course_id);

@@ -1,7 +1,7 @@
 export interface Teacher {
   id: number;
   name: string;
-  skills: string[];
+  qualifications: string[];
   working_times: WorkingTimes;
   created_at: string;
 }
@@ -70,7 +70,7 @@ export interface Conflict {
   affected_assignments: number[];
 }
 
-export type ConflictType = 'time_overlap' | 'skill_mismatch' | 'workload_exceeded' | 'availability_conflict';
+export type ConflictType = 'time_overlap' | 'qualification_mismatch' | 'workload_exceeded' | 'availability_conflict';
 export type ConflictSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export interface AIAssignmentRequest {

@@ -1,11 +1,13 @@
 # CLAUDE.md - Teacher Course Assignment Application 🧠
 
 ## Project Overview 📖
-This is an **Electron-based desktop application** that uses **AI-powered algorithms** to assign teachers to courses based on exact skill matching and creates an **interactive calendar** for managing and visualizing assignments.
+
+This is an **Electron-based desktop application** that uses **AI-powered algorithms** to assign teachers to courses based on exact qualification matching and creates an **interactive calendar** for managing and visualizing assignments.
 
 ### Core Functionality
-- **Teacher Management**: Add/edit teachers with skills and availability
-- **Course Management**: Create courses with specific skill requirements
+
+- **Teacher Management**: Add/edit teachers with qualifications and availability
+- **Course Management**: Create courses with specific qualification requirements
 - **AI-Powered Assignment**: Use Anthropic Claude API for optimal teacher-course distribution
 - **Interactive Calendar**: Outlook-like calendar with drag-drop, filtering, and multiple views
 - **Data Import/Export**: CSV import with AI interpretation, iCal/CSV export
@@ -16,6 +18,7 @@ This is an **Electron-based desktop application** that uses **AI-powered algorit
 ## Technology Stack 🛠️
 
 ### Core Technologies
+
 - **Desktop Framework**: Electron (cross-platform desktop app)
 - **Frontend**: React.js + TypeScript
 - **Database**: SQLite with better-sqlite3
@@ -26,6 +29,7 @@ This is an **Electron-based desktop application** that uses **AI-powered algorit
 - **Testing**: Jest + Playwright
 
 ### Key Dependencies
+
 ```json
 {
   "electron": "Latest stable",
@@ -43,6 +47,7 @@ This is an **Electron-based desktop application** that uses **AI-powered algorit
 ## Architecture Summary 🏗️
 
 ### Application Structure
+
 ```
 src/
 ├── main/           # Electron main process
@@ -53,6 +58,7 @@ src/
 ```
 
 ### Data Flow
+
 1. **User Input** → React Components
 2. **IPC Communication** → Electron Main Process
 3. **Business Logic** → Service Classes (Assignment, AI, Database)
@@ -61,6 +67,7 @@ src/
 6. **UI Updates** → Calendar and Lists
 
 ### Core Services
+
 - **DatabaseService**: SQLite operations and migrations
 - **AssignmentService**: Teacher-course matching algorithms
 - **AnthropicService**: AI API integration
@@ -71,7 +78,8 @@ src/
 ## Key Requirements & Constraints 📋
 
 ### Critical Requirements
-1. **Exact Skill Matching**: Teacher.skills must exactly match Course.topic (no speculation)
+
+1. **Exact qualification Matching**: Teacher.qualifications must exactly match Course.topic (no speculation)
 2. **Interactive Calendar**: Full Outlook-like functionality with drag-drop
 3. **Local Installation**: Desktop app with installer, no web deployment
 4. **AI Enhancement**: Use Anthropic API for workload balancing and conflict resolution
@@ -79,6 +87,7 @@ src/
 6. **Cross-Platform**: Windows, macOS, Linux support
 
 ### Technical Constraints
+
 - **No HTTPS/SSL**: Security features deferred to later phases
 - **No Docker**: Local native installation only
 - **Local Data Only**: All data stored locally in SQLite
@@ -89,20 +98,21 @@ src/
 ## Database Schema 🗃️
 
 ### Core Tables
+
 ```sql
--- Teachers with skills and availability
+-- Teachers with qualifications and availability
 CREATE TABLE teachers (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
-    skills TEXT NOT NULL,        -- JSON array of skill strings
+    qualifications TEXT NOT NULL,        -- JSON array of qualification strings
     working_times TEXT,          -- JSON object for availability
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Courses requiring specific skills
+-- Courses requiring specific qualifications
 CREATE TABLE courses (
     id INTEGER PRIMARY KEY,
-    topic TEXT NOT NULL,         -- Must match teacher skills exactly
+    topic TEXT NOT NULL,         -- Must match teacher qualifications exactly
     lessons_count INTEGER NOT NULL,
     lesson_duration INTEGER NOT NULL,  -- Minutes per lesson
     start_date DATE NOT NULL,
@@ -135,6 +145,7 @@ CREATE TABLE app_settings (
 ## AI Integration Details 🤖
 
 ### Anthropic API Usage
+
 The app integrates with Anthropic Claude API for:
 
 1. **Workload Balancing**: Optimize teacher assignments for fair distribution
@@ -143,16 +154,17 @@ The app integrates with Anthropic Claude API for:
 4. **Assignment Rationale**: Generate explanations for assignment decisions
 
 ### System Prompt Templates
+
 ```javascript
 const ASSIGNMENT_PROMPT = `
 You are an assignment optimization system for teachers and courses.
 Given the following data:
-- Teachers with exact skills: {teachers}
-- Courses requiring skills: {courses}
+- Teachers with exact qualifications: {teachers}
+- Courses requiring qualifications: {courses}
 - Current assignments: {assignments}
 
 Optimize the assignment distribution considering:
-1. Exact skill matching (required)
+1. Exact qualification matching (required)
 2. Fair workload distribution
 3. Teacher availability
 4. Course scheduling constraints
@@ -162,6 +174,7 @@ Respond with optimized assignments and rationale.
 ```
 
 ### API Configuration
+
 - **Model Selection**: Dropdown for Claude models (Haiku 3.5, Sonnet 4, Opus 4.1)
 - **API Key Storage**: Encrypted local storage
 - **System Prompt**: User-customizable prompts
@@ -172,12 +185,14 @@ Respond with optimized assignments and rationale.
 ## Development Guidelines 📏
 
 ### Mandatory Practices
+
 1. **🔄 Commit After Every Implementation**: Make a GitHub commit after completing any TODO item
 2. **📝 Keep Documentation Updated**: Always update CHANGELOG.md and TODO.md after changes
 3. **🧹 Refactor Documentation**: Clean up .md files when they become messy or outdated
 4. **🚀 Use Agents for Parallel Work**: Leverage multiple agents for concurrent development
 
 ### Code Standards
+
 - **TypeScript**: Strict mode enabled, full type coverage
 - **React**: Functional components with hooks
 - **Error Handling**: Comprehensive try-catch blocks and user feedback
@@ -185,6 +200,7 @@ Respond with optimized assignments and rationale.
 - **Documentation**: JSDoc comments for all public methods
 
 ### File Organization
+
 ```
 TODO.md        # → Task tracking and progress
 CHANGELOG.md   # → All code changes with references
@@ -197,7 +213,8 @@ README.md      # → User-facing documentation
 ## Assignment Algorithm Logic 🧮
 
 ### Core Algorithm Flow
-1. **Skill Matching**: Find teachers with exact skill match for each course
+
+1. **qualification Matching**: Find teachers with exact qualification match for each course
 2. **Availability Check**: Validate teacher working times against course schedule
 3. **Conflict Detection**: Identify scheduling overlaps
 4. **Hungarian Algorithm**: Optimal assignment considering all constraints
@@ -205,9 +222,10 @@ README.md      # → User-facing documentation
 6. **Validation**: Final check for consistency and feasibility
 
 ### Key Rules
+
 - **One Teacher Per Course**: Each course assigned to exactly one teacher
 - **Multiple Courses Per Teacher**: Teachers can handle multiple courses
-- **Exact Skill Match**: No partial or approximate matching allowed
+- **Exact qualification Match**: No partial or approximate matching allowed
 - **Availability Respect**: Never assign outside teacher's working hours
 - **Fairness Priority**: Distribute workload as evenly as possible
 
@@ -216,6 +234,7 @@ README.md      # → User-facing documentation
 ## Calendar Implementation 📅
 
 ### FullCalendar Configuration
+
 - **Views**: Month, Week, Day, Agenda (list view)
 - **Drag & Drop**: Real-time assignment rescheduling
 - **Filtering**: By teacher, course, date range
@@ -223,6 +242,7 @@ README.md      # → User-facing documentation
 - **Events**: Dynamic loading from assignment data
 
 ### Calendar Features
+
 - **Event Details**: Click to show course/teacher information
 - **Color Coding**: Different colors for different teachers/subjects
 - **Time Conflicts**: Visual indication of scheduling issues
@@ -233,6 +253,7 @@ README.md      # → User-facing documentation
 ## File Import/Export 📁
 
 ### CSV Import Process
+
 1. **File Selection**: Native file picker dialog
 2. **AI Analysis**: Claude API interprets CSV structure
 3. **Column Mapping**: Automatic/manual mapping to data fields
@@ -241,6 +262,7 @@ README.md      # → User-facing documentation
 6. **Batch Import**: Process with progress indication
 
 ### Export Capabilities
+
 - **Calendar Export**: iCal format for external calendar apps
 - **Assignment Export**: CSV with all assignment details
 - **Teacher/Course Export**: Backup data in CSV format
@@ -251,6 +273,7 @@ README.md      # → User-facing documentation
 ## Testing Strategy 🧪
 
 ### Test Categories
+
 1. **Unit Tests**: Algorithm logic, data models, utilities
 2. **Integration Tests**: Database operations, IPC communication
 3. **E2E Tests**: Complete user workflows
@@ -258,6 +281,7 @@ README.md      # → User-facing documentation
 5. **Cross-Platform Tests**: Windows, macOS, Linux compatibility
 
 ### Test Files Location
+
 ```
 tests/
 ├── unit/           # Jest unit tests
@@ -271,6 +295,7 @@ tests/
 ## Build & Distribution 📦
 
 ### Build Process
+
 1. **Development**: npm run dev (hot reloading)
 2. **Production Build**: npm run build
 3. **Electron Packaging**: electron-builder
@@ -278,6 +303,7 @@ tests/
 5. **Installer Creation**: Platform-specific installers
 
 ### Distribution Targets
+
 - **Windows**: .exe installer with auto-updater
 - **macOS**: .dmg installer with notarization
 - **Linux**: .AppImage and .deb packages
@@ -287,12 +313,14 @@ tests/
 ## File References 📚
 
 ### Essential Files
+
 - **[TODO.md](./TODO.md)**: Complete task breakdown with parallel work opportunities
 - **[CHANGELOG.md](./CHANGELOG.md)**: Detailed change history with git references
 - **package.json**: Dependencies and scripts
 - **electron-builder.json**: Build configuration
 
 ### Development Files
+
 - **src/**: All source code
 - **database/**: SQLite schemas and migrations
 - **tests/**: All test files
@@ -303,6 +331,7 @@ tests/
 ## Quick Start for New Claude Instances 🚀
 
 ### Immediate Actions
+
 1. **Read TODO.md**: Understand current progress and next tasks
 2. **Check CHANGELOG.md**: See what's been implemented recently
 3. **Review Database Schema**: Understand data relationships
@@ -310,6 +339,7 @@ tests/
 5. **Use Agents Proactively**: Assign different agents to different modules
 
 ### Key Commands
+
 ```bash
 npm install          # Install dependencies
 npm run dev          # Start development mode
@@ -319,6 +349,7 @@ npm run dist         # Create installers
 ```
 
 ### Agent Assignments (Recommended)
+
 - **Agent 1**: Database layer and models
 - **Agent 2**: Assignment algorithms
 - **Agent 3**: React UI components
@@ -333,13 +364,15 @@ npm run dist         # Create installers
 ## Important Notes ⚠️
 
 ### Critical Reminders
+
 - **No Emojis in Code**: Only use emojis in markdown files, never in source code
-- **Exact Skill Matching**: No AI speculation on skill compatibility
+- **Exact qualification Matching**: No AI speculation on qualification compatibility
 - **Local App Only**: No web deployment or Docker containers
 - **Commit Everything**: Every completed TODO item gets a git commit
 - **Update Documentation**: Keep TODO.md and CHANGELOG.md current
 
 ### Success Criteria
+
 - ✅ Desktop app installs and runs on all platforms
 - ✅ Teachers and courses can be managed via UI
 - ✅ AI successfully assigns teachers to courses
@@ -349,7 +382,8 @@ npm run dist         # Create installers
 
 ---
 
-*Last Updated: 2025-08-30*
-*Next Review: When major milestones are completed*
+_Last Updated: 2025-08-30_
+_Next Review: When major milestones are completed_
+
 - ALWAYS COMMIT TO GITHUB AFTER IMPLEMENTING FEATURES OR REACHING MILESTONES
 - -----------------ALWAYS KEEP TODO.MD AND CHANGELOG.MD UP-TO-DATE-----------
