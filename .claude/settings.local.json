@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__perplexity-ask__perplexity_ask",
+      "mcp__Ref__ref_search_documentation",
+      "mcp__Ref__ref_read_url",
+      "mcp__clear-thought-mcp-server__sequentialthinking"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
