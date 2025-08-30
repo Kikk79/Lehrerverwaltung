@@ -1,4 +1,4 @@
-import { databaseService } from './DatabaseService';
+import { DatabaseService } from './DatabaseService';
 
 /**
  * Service for managing and customizing AI system prompts
@@ -168,7 +168,7 @@ Be solution-focused and practical. Provide multiple options when possible.`,
   public async getCurrentSystemPrompt(type: PromptType): Promise<string> {
     try {
       const settingKey = `system_prompt_${type}`;
-      const customPrompt = await databaseService.getAppSetting(settingKey);
+      const customPrompt = await DatabaseService.getInstance().getSetting(settingKey);
       
       if (customPrompt) {
         return customPrompt;
@@ -195,7 +195,7 @@ Be solution-focused and practical. Provide multiple options when possible.`,
       }
 
       const settingKey = `system_prompt_${type}`;
-      await databaseService.updateAppSetting(settingKey, prompt);
+      await DatabaseService.getInstance().setSetting(settingKey, prompt);
       return true;
     } catch (error) {
       console.error(`Failed to update system prompt for ${type}:`, error);
@@ -214,7 +214,7 @@ Be solution-focused and practical. Provide multiple options when possible.`,
       }
 
       const settingKey = `system_prompt_${type}`;
-      await databaseService.updateAppSetting(settingKey, defaultPrompt.template);
+      await DatabaseService.getInstance().setSetting(settingKey, defaultPrompt.template);
       return true;
     } catch (error) {
       console.error(`Failed to reset prompt to default for ${type}:`, error);
@@ -318,6 +318,7 @@ Be solution-focused and practical. Provide multiple options when possible.`,
         description,
         template,
         type,
+        category: 'core',
         variables: variables || [],
         created_at: new Date().toISOString(),
         is_active: true,
@@ -326,11 +327,11 @@ Be solution-focused and practical. Provide multiple options when possible.`,
 
       // Store in database as JSON
       const customPromptsKey = 'custom_prompts';
-      const existingPrompts = await databaseService.getAppSetting(customPromptsKey) || '[]';
+      const existingPrompts = await DatabaseService.getInstance().getSetting(customPromptsKey) || '[]';
       const prompts: CustomPromptTemplate[] = JSON.parse(existingPrompts);
       
       prompts.push(customPrompt);
-      await databaseService.updateAppSetting(customPromptsKey, JSON.stringify(prompts));
+      await DatabaseService.getInstance().setSetting(customPromptsKey, JSON.stringify(prompts));
 
       return customPrompt;
     } catch (error) {
@@ -345,7 +346,7 @@ Be solution-focused and practical. Provide multiple options when possible.`,
   public async getCustomPrompts(): Promise<CustomPromptTemplate[]> {
     try {
       const customPromptsKey = 'custom_prompts';
-      const existingPrompts = await databaseService.getAppSetting(customPromptsKey) || '[]';
+      const existingPrompts = await DatabaseService.getInstance().getSetting(customPromptsKey) || '[]';
       return JSON.parse(existingPrompts);
     } catch (error) {
       console.error('Failed to get custom prompts:', error);
@@ -359,11 +360,11 @@ Be solution-focused and practical. Provide multiple options when possible.`,
   public async deleteCustomPrompt(id: string): Promise<boolean> {
     try {
       const customPromptsKey = 'custom_prompts';
-      const existingPrompts = await databaseService.getAppSetting(customPromptsKey) || '[]';
+      const existingPrompts = await DatabaseService.getInstance().getSetting(customPromptsKey) || '[]';
       const prompts: CustomPromptTemplate[] = JSON.parse(existingPrompts);
       
       const filteredPrompts = prompts.filter(p => p.id !== id);
-      await databaseService.updateAppSetting(customPromptsKey, JSON.stringify(filteredPrompts));
+      await DatabaseService.getInstance().setSetting(customPromptsKey, JSON.stringify(filteredPrompts));
       
       return prompts.length !== filteredPrompts.length;
     } catch (error) {

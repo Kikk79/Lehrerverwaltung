@@ -1,5 +1,5 @@
 import { AnthropicModel, AnthropicConfig } from '../types';
-import { databaseService } from './DatabaseService';
+import { DatabaseService } from './DatabaseService';
 
 /**
  * Service for managing AI model selection and configuration
@@ -106,7 +106,8 @@ export class ModelSelectionService {
    */
   public async getCurrentModelConfig(): Promise<AnthropicModel> {
     try {
-      const modelSetting = await databaseService.getAppSetting('ai_model');
+      const db = DatabaseService.getInstance();
+      const modelSetting = await db.getSetting('ai_model');
       const modelId = modelSetting as AnthropicModel;
       
       // Validate model exists
@@ -132,7 +133,8 @@ export class ModelSelectionService {
         throw new Error(`Invalid model ID: ${modelId}`);
       }
 
-      await databaseService.updateAppSetting('ai_model', modelId);
+      const db = DatabaseService.getInstance();
+      await db.setSetting('ai_model', modelId);
       return true;
     } catch (error) {
       console.error('Failed to update model selection:', error);
@@ -228,7 +230,8 @@ export class ModelSelectionService {
       }
 
       // Test if API key is available
-      const apiKey = await databaseService.getAppSetting('ai_api_key');
+      const db = DatabaseService.getInstance();
+      const apiKey = await db.getSetting('ai_api_key');
       if (!apiKey) {
         return {
           isValid: false,

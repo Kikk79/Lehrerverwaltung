@@ -114,55 +114,5 @@ INSERT OR IGNORE INTO weighting_settings (profile_name, equality_weight, continu
     ('Loyalty Priority', 20, 20, 60, 0),
     ('Equal Distribution', 80, 10, 10, 0);
 
--- Trigger to update updated_at timestamp automatically
-CREATE TRIGGER IF NOT EXISTS update_teachers_timestamp 
-    AFTER UPDATE ON teachers
-    FOR EACH ROW
-BEGIN
-    UPDATE teachers SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_courses_timestamp 
-    AFTER UPDATE ON courses
-    FOR EACH ROW
-BEGIN
-    UPDATE courses SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_assignments_timestamp 
-    AFTER UPDATE ON assignments
-    FOR EACH ROW
-BEGIN
-    UPDATE assignments SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_settings_timestamp 
-    AFTER UPDATE ON app_settings
-    FOR EACH ROW
-BEGIN
-    UPDATE app_settings SET updated_at = CURRENT_TIMESTAMP WHERE key = OLD.key;
-END;
-
--- New triggers for AI tables
-CREATE TRIGGER IF NOT EXISTS update_weighting_settings_timestamp 
-    AFTER UPDATE ON weighting_settings
-    FOR EACH ROW
-BEGIN
-    UPDATE weighting_settings SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_chat_conversations_timestamp 
-    AFTER UPDATE ON chat_conversations
-    FOR EACH ROW
-BEGIN
-    UPDATE chat_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
-
--- Trigger to ensure only one default weighting profile
-CREATE TRIGGER IF NOT EXISTS ensure_single_default_weighting
-    AFTER UPDATE ON weighting_settings
-    WHEN NEW.is_default = 1
-    FOR EACH ROW
-BEGIN
-    UPDATE weighting_settings SET is_default = 0 WHERE id != NEW.id AND is_default = 1;
-END;
+-- Note: Triggers removed for initial setup to avoid syntax compatibility issues
+-- Can be added later if needed for timestamp management

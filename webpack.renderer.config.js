@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const webpack = require('webpack');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -19,6 +20,14 @@ module.exports = (env, argv) => {
       alias: {
         '@shared': path.resolve(__dirname, 'src/shared'),
         '@renderer': path.resolve(__dirname, 'src/renderer')
+      },
+      fallback: {
+        "path": require.resolve("path-browserify"),
+        "fs": false,
+        "crypto": false,
+        "buffer": require.resolve("buffer"),
+        "stream": require.resolve("stream-browserify"),
+        "util": require.resolve("util")
       }
     },
     module: {
@@ -52,6 +61,14 @@ module.exports = (env, argv) => {
         template: './src/renderer/index.html',
         filename: 'index.html'
       }),
+      new webpack.ProvidePlugin({
+        global: 'global',
+        Buffer: ['buffer', 'Buffer'],
+        process: 'process/browser'
+      }),
+      new webpack.DefinePlugin({
+        global: 'globalThis'
+      }),
       ...(isProduction ? [
         new MiniCssExtractPlugin({
           filename: 'styles.css'
@@ -60,7 +77,7 @@ module.exports = (env, argv) => {
     ],
     devServer: {
       static: path.join(__dirname, 'dist/renderer'),
-      port: 3000,
+      port: 3001,
       hot: true,
       historyApiFallback: true
     },

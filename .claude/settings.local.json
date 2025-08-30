@@ -10,7 +10,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(npx ts-node:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Read(C:\\c\\Users\\Klaus\\Documents\\GH\\Lehrerverwaltung\\src/**)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []
