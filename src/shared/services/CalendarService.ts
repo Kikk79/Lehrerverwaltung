@@ -329,7 +329,7 @@ export class CalendarService {
    */
   public getCalendarPreferences(): CalendarPreferences {
     try {
-      const savedPrefs = this.dbService.getAppSetting('calendar_preferences');
+      const savedPrefs = this.dbService.getSetting('calendar_preferences');
       if (savedPrefs) {
         return { ...this.defaultPreferences, ...JSON.parse(savedPrefs) };
       }
@@ -348,7 +348,7 @@ export class CalendarService {
       const currentPrefs = this.getCalendarPreferences();
       const updatedPrefs = { ...currentPrefs, ...preferences };
       
-      this.dbService.setAppSetting('calendar_preferences', JSON.stringify(updatedPrefs));
+      this.dbService.setSetting('calendar_preferences', JSON.stringify(updatedPrefs));
     } catch (error) {
       console.error('Error saving calendar preferences:', error);
       throw error;

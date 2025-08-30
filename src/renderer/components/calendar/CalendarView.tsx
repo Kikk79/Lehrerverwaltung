@@ -10,13 +10,13 @@ import {
   Assignment,
   Teacher,
   Course 
-} from '../../shared/types';
-import { CalendarService, CalendarViewType, CalendarPreferences } from '../../shared/services/CalendarService';
-import { DatabaseService } from '../../shared/services/DatabaseService';
+} from '../../../shared/types';
+import { CalendarService, CalendarViewType, CalendarPreferences } from '../../../shared/services/CalendarService';
+import { DatabaseService } from '../../../shared/services/DatabaseService';
 import CalendarToolbar from './CalendarToolbar';
 import CalendarFilters from './CalendarFilters';
 import EventDetailsModal from './EventDetailsModal';
-import { EventClickArg, EventDropArg, EventResizeArg } from '@fullcalendar/core';
+import { EventClickArg, EventDropArg } from '@fullcalendar/core';
 
 interface CalendarViewProps {
   className?: string;
@@ -173,7 +173,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ className = '' }) => {
   /**
    * Handle event resize (duration change)
    */
-  const handleEventResize = useCallback(async (info: EventResizeArg) => {
+  const handleEventResize = useCallback(async (info: any) => {
     try {
       const eventId = info.event.id;
       const newStart = info.event.start!;

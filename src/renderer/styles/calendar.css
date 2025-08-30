@@ -1,0 +1,258 @@
+/* FullCalendar Custom Styles for Outlook-like appearance */
+
+/* Calendar Container */
+.calendar-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+/* Calendar Event Styles */
+.calendar-event {
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-event:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Day Header Styling */
+.calendar-day-header {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  font-size: 14px;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Calendar Grid Styling */
+.fc-theme-standard .fc-scrollgrid {
+  border-color: #dee2e6;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: #dee2e6;
+}
+
+/* Today's Date Highlighting */
+.fc-day-today {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+.fc-day-today .fc-daygrid-day-number {
+  background-color: #0d6efd;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  margin: 2px;
+}
+
+/* Time Grid Styling */
+.fc-timegrid-slot {
+  height: 30px;
+}
+
+.fc-timegrid-slot-minor {
+  border-top-style: dotted;
+}
+
+/* Now Indicator */
+.fc-timegrid-now-indicator-line {
+  border-top: 2px solid #dc3545;
+  opacity: 0.8;
+}
+
+.fc-timegrid-now-indicator-arrow {
+  border-top-color: #dc3545;
+  border-bottom-color: #dc3545;
+}
+
+/* Event Tooltips */
+.calendar-tooltip {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 250px;
+}
+
+.calendar-tooltip h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.calendar-tooltip p {
+  margin: 4px 0;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* Business Hours Styling */
+.fc-non-business {
+  background-color: rgba(108, 117, 125, 0.03);
+}
+
+/* More Link Styling */
+.fc-more-link {
+  color: #0d6efd;
+  font-weight: 500;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.fc-more-link:hover {
+  color: #0a58ca;
+  text-decoration: underline;
+}
+
+/* Popover Styling */
+.fc-popover {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.fc-popover-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Month View Specific */
+.fc-daygrid-day-number {
+  font-weight: 500;
+  color: #495057;
+  padding: 4px;
+}
+
+.fc-daygrid-day-events {
+  margin: 2px;
+}
+
+/* Week/Day View Specific */
+.fc-timegrid-axis-cushion {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.fc-timegrid-col-events {
+  margin: 0 2px;
+}
+
+/* List View Specific */
+.fc-list-day-cushion {
+  background-color: #f8f9fa;
+  border-top: 2px solid #0d6efd;
+  font-weight: 600;
+  color: #495057;
+}
+
+.fc-list-event:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Scrollbar Styling */
+.fc-scroller::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fc-scroller::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+  background: #dee2e6;
+  border-radius: 3px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb:hover {
+  background: #ced4da;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .calendar-event {
+    font-size: 11px;
+  }
+  
+  .calendar-tooltip {
+    max-width: 200px;
+  }
+  
+  .fc-timegrid-axis-cushion {
+    font-size: 10px;
+  }
+}
+
+/* Dark mode support (if needed in future) */
+@media (prefers-color-scheme: dark) {
+  .calendar-day-header {
+    background-color: #343a40;
+    color: #f8f9fa;
+  }
+  
+  .fc-theme-standard .fc-scrollgrid {
+    border-color: #495057;
+  }
+  
+  .fc-theme-standard td,
+  .fc-theme-standard th {
+    border-color: #495057;
+  }
+}
+
+/* Animation for drag and drop */
+.fc-event-dragging {
+  opacity: 0.7;
+  transform: rotate(5deg);
+  z-index: 999;
+}
+
+.fc-event-resizing {
+  opacity: 0.7;
+}
+
+/* Loading state */
+.calendar-loading {
+  position: relative;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.calendar-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #0d6efd;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  z-index: 1000;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

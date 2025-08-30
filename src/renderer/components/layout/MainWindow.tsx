@@ -4,9 +4,10 @@ import Dashboard from '../common/Dashboard';
 import TeacherList from '../teachers/TeacherList';
 import CourseList from '../courses/CourseList';
 import AssignmentList from '../assignments/AssignmentList';
+import CalendarView from '../calendar/CalendarView';
 import SettingsPanel from '../settings/SettingsPanel';
 
-export type ViewType = 'dashboard' | 'teachers' | 'courses' | 'assignments' | 'settings';
+export type ViewType = 'dashboard' | 'teachers' | 'courses' | 'assignments' | 'calendar' | 'settings';
 
 interface MainWindowProps {
   className?: string;
@@ -25,6 +26,8 @@ const MainWindow: React.FC<MainWindowProps> = ({ className = '' }) => {
         return <CourseList />;
       case 'assignments':
         return <AssignmentList />;
+      case 'calendar':
+        return <CalendarView />;
       case 'settings':
         return <SettingsPanel />;
       default:

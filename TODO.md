@@ -125,25 +125,25 @@
 
 ### Calendar Setup
 
-- [ ] **CAL-001**: Install FullCalendar with React integration
-- [ ] **CAL-002**: Configure FullCalendar with Outlook-like styling
-- [ ] **CAL-003**: Implement Month/Week/Day/Agenda view modes
-- [ ] **CAL-004**: Create calendar event data mapping from assignments
+- [x] **CAL-001**: Install FullCalendar with React integration ✅
+- [x] **CAL-002**: Configure FullCalendar with Outlook-like styling ✅
+- [x] **CAL-003**: Implement Month/Week/Day/Agenda view modes ✅
+- [x] **CAL-004**: Create calendar event data mapping from assignments ✅
 
 ### Interactive Features
 
-- [ ] **CAL-005**: Implement drag-and-drop for assignment rescheduling
-- [ ] **CAL-006**: Add event click handlers for assignment details
-- [ ] **CAL-007**: Create calendar filtering by teacher/course
-- [ ] **CAL-008**: Implement calendar zoom and navigation controls
-- [ ] **CAL-009**: Add calendar event tooltips and hover effects
+- [x] **CAL-005**: Implement drag-and-drop for assignment rescheduling ✅
+- [x] **CAL-006**: Add event click handlers for assignment details ✅
+- [x] **CAL-007**: Create calendar filtering by teacher/course ✅
+- [x] **CAL-008**: Implement calendar zoom and navigation controls ✅
+- [x] **CAL-009**: Add calendar event tooltips and hover effects ✅
 
 ### Calendar Services
 
-- [ ] **CAL-010**: Create CalendarService for event management
-- [ ] **CAL-011**: Implement calendar data synchronization
-- [ ] **CAL-012**: Add calendar event validation
-- [ ] **CAL-013**: Create calendar customization options
+- [x] **CAL-010**: Create CalendarService for event management ✅
+- [x] **CAL-011**: Implement calendar data synchronization ✅
+- [x] **CAL-012**: Add calendar event validation ✅
+- [x] **CAL-013**: Create calendar customization options ✅
 
 ---
 
