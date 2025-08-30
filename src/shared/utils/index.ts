@@ -1,4 +1,4 @@
-import { TimeRange, TimeSlot, WorkingTimes } from '../types';
+import { TimeRange, TimeSlot, WorkingTimes, Teacher, Course, Assignment } from '../types';
 
 export function isTimeOverlap(slot1: TimeSlot, slot2: TimeSlot): boolean {
   if (slot1.date !== slot2.date) return false;
@@ -12,7 +12,7 @@ export function isTimeOverlap(slot1: TimeSlot, slot2: TimeSlot): boolean {
 }
 
 export function isWithinWorkingHours(slot: TimeSlot, workingTimes: WorkingTimes): boolean {
-  const dayOfWeek = new Date(slot.date).toLocaleDateString('en-US', { weekday: 'lowercase' }) as keyof WorkingTimes;
+  const dayOfWeek = new Date(slot.date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() as keyof WorkingTimes;
   const workingHours = workingTimes[dayOfWeek];
   
   if (!workingHours) return false;
@@ -55,7 +55,7 @@ export function generateTimeSlots(
   let remainingLessons = lessons;
   
   while (currentDate <= end && remainingLessons > 0) {
-    const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'lowercase' }) as keyof WorkingTimes;
+    const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() as keyof WorkingTimes;
     const workingHours = workingTimes[dayOfWeek];
     
     if (workingHours) {
@@ -94,7 +94,7 @@ export function validateTeacher(teacher: Partial<Teacher>): string[] {
     errors.push('At least one skill is required');
   }
   
-  if (teacher.skills?.some(skill => !skill.trim())) {
+  if (teacher.skills?.some((skill: string) => !skill.trim())) {
     errors.push('All skills must be non-empty');
   }
   
@@ -140,7 +140,7 @@ export function getConflictingSLots(assignments: Assignment[]): TimeSlot[] {
   const conflicts: TimeSlot[] = [];
   
   assignments.forEach(assignment => {
-    assignment.scheduled_slots.forEach(slot => {
+    assignment.scheduled_slots.forEach((slot: TimeSlot) => {
       const isConflicting = allSlots.some(existingSlot => isTimeOverlap(slot, existingSlot));
       if (isConflicting) {
         conflicts.push(slot);

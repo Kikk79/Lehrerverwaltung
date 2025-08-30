@@ -1,8 +1,10 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
+import { MainDatabaseHandler } from './database';
 
 class TeacherAssignmentApp {
   private mainWindow: BrowserWindow | null = null;
+  private databaseHandler!: MainDatabaseHandler;
 
   constructor() {
     this.init();
@@ -10,12 +12,14 @@ class TeacherAssignmentApp {
 
   private init(): void {
     app.whenReady().then(() => {
+      this.databaseHandler = new MainDatabaseHandler();
       this.createWindow();
       this.registerIpcHandlers();
     });
 
     app.on('window-all-closed', () => {
       if (process.platform !== 'darwin') {
+        this.databaseHandler?.close();
         app.quit();
       }
     });
