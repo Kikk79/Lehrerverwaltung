@@ -1,0 +1,101 @@
+{
+  "name": "teacher-course-assignment",
+  "version": "0.1.0",
+  "description": "AI-powered desktop application for assigning teachers to courses with interactive calendar",
+  "main": "dist/main/main.js",
+  "author": "Klaus",
+  "license": "MIT",
+  "homepage": "./",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
+    "dev:main": "webpack --config webpack.main.config.js --mode development --watch",
+    "dev:renderer": "webpack serve --config webpack.renderer.config.js --mode development",
+    "build": "npm run build:main && npm run build:renderer",
+    "build:main": "webpack --config webpack.main.config.js --mode production",
+    "build:renderer": "webpack --config webpack.renderer.config.js --mode production",
+    "postinstall": "electron-rebuild",
+    "start": "electron .",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "test": "jest",
+    "test:e2e": "playwright test",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "autoprefixer": "^10.4.16",
+    "concurrently": "^8.2.2",
+    "css-loader": "^6.8.1",
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "html-webpack-plugin": "^5.6.0",
+    "jest": "^29.7.0",
+    "mini-css-extract-plugin": "^2.7.6",
+    "playwright": "^1.40.1",
+    "postcss": "^8.4.32",
+    "postcss-loader": "^7.3.4",
+    "style-loader": "^3.3.3",
+    "tailwindcss": "^3.4.0",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.14.0",
+    "@fullcalendar/core": "^6.1.10",
+    "@fullcalendar/daygrid": "^6.1.10",
+    "@fullcalendar/interaction": "^6.1.10",
+    "@fullcalendar/react": "^6.1.10",
+    "@fullcalendar/resource": "^6.1.10",
+    "@fullcalendar/resource-daygrid": "^6.1.10",
+    "@fullcalendar/resource-timeline": "^6.1.10",
+    "@fullcalendar/timegrid": "^6.1.10",
+    "@fullcalendar/timeline": "^6.1.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "build": {
+    "appId": "com.teacher-assignment.app",
+    "productName": "Teacher Course Assignment",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.education"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "assets/icon.png",
+      "category": "Education"
+    }
+  }
+}
