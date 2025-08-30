@@ -6,7 +6,9 @@
       "mcp__Ref__ref_read_url",
       "mcp__clear-thought-mcp-server__sequentialthinking",
       "Bash(mkdir:*)",
-      "mcp__sequential-thinking__sequentialthinking"
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
