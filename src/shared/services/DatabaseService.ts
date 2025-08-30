@@ -403,6 +403,42 @@ export class DatabaseService {
     }
   }
 
+  // ALIAS METHODS FOR SETTINGS SERVICE COMPATIBILITY
+  
+  /**
+   * Get all weighting presets (alias for getAllWeightingSettings)
+   */
+  public getWeightingPresets(): WeightingSettings[] {
+    return this.getAllWeightingSettings();
+  }
+
+  /**
+   * Save weighting preset (alias for createWeightingSettings)
+   */
+  public saveWeightingPreset(preset: Omit<WeightingSettings, 'id' | 'created_at' | 'updated_at'>): void {
+    this.createWeightingSettings(preset);
+  }
+
+  /**
+   * Delete weighting preset (alias for deleteWeightingSettings)
+   */
+  public deleteWeightingPreset(id: number): void {
+    this.deleteWeightingSettings(id);
+  }
+
+  /**
+   * Set default weighting preset
+   */
+  public setDefaultWeightingPreset(id: number): void {
+    // First, set all presets to non-default
+    const stmt1 = this.db.prepare('UPDATE weighting_settings SET is_default = 0');
+    stmt1.run();
+    
+    // Then set the specified preset as default
+    const stmt2 = this.db.prepare('UPDATE weighting_settings SET is_default = 1 WHERE id = ?');
+    stmt2.run(id);
+  }
+
   // WEIGHTING SETTINGS OPERATIONS
   
   /**

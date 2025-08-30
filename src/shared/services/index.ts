@@ -11,6 +11,10 @@ export { ModelSelectionService, modelSelectionService } from './ModelSelectionSe
 export { SystemPromptService, systemPromptService } from './SystemPromptService';
 export { AICacheService, aiCacheService } from './AICacheService';
 
+// Settings Management Services
+export { SettingsService } from './SettingsService';
+export { BackupService } from './BackupService';
+
 // Re-export types and interfaces
 export type { AssignmentModification } from './ChatAssignmentWorkflow';
 export type { ModelInfo, ModelUseCase, ModelComparison, ModelSelectionContext } from './ModelSelectionService';
