@@ -36,6 +36,12 @@ interface ElectronAPI {
     // Utility operations
     getStats: () => Promise<any>;
   };
+
+  // Assignment operations
+  assignment: {
+    generate: (weights?: any, constraints?: any) => Promise<any[]>;
+    getQualificationMatches: () => Promise<any[]>;
+  };
 }
 
 declare global {

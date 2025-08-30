@@ -1,6 +1,7 @@
 import { DatabaseService } from '../shared/services/DatabaseService';
+import { AssignmentService, AssignmentWeights } from '../shared/services/AssignmentService';
 import { ipcMain } from 'electron';
-import { Teacher, Course, Assignment } from '../shared/types';
+import { Teacher, Course, Assignment, AssignmentConstraints } from '../shared/types';
 
 /**
  * Main process database handler
@@ -8,9 +9,11 @@ import { Teacher, Course, Assignment } from '../shared/types';
  */
 export class MainDatabaseHandler {
   private dbService: DatabaseService;
+  private assignmentService: AssignmentService;
 
   constructor() {
     this.dbService = DatabaseService.getInstance();
+    this.assignmentService = new AssignmentService(this.dbService);
     this.setupIpcHandlers();
   }
 
@@ -97,6 +100,17 @@ export class MainDatabaseHandler {
     // Utility operations
     ipcMain.handle('db:getStats', async () => {
       return this.dbService.getStats();
+    });
+
+    // Assignment generation operations
+    ipcMain.handle('assignment:generate', async (_, weights?: AssignmentWeights, constraints?: AssignmentConstraints) => {
+      return this.assignmentService.generateAssignments(weights, constraints);
+    });
+
+    ipcMain.handle('assignment:getQualificationMatches', async () => {
+      const teachers = this.dbService.getAllTeachers();
+      const courses = this.dbService.getAllCourses();
+      return this.assignmentService.getQualificationMatches(courses, teachers);
     });
   }
 

@@ -50,8 +50,40 @@ const Dashboard: React.FC = () => {
   };
 
   const handleGenerateAssignments = async () => {
-    // TODO: Integrate with AssignmentService
-    alert('Assignment generation will be implemented in the next phase');
+    try {
+      setLoading(true);
+      
+      // Check if we have teachers and courses
+      if (stats.teacherCount === 0) {
+        alert('Please add teachers before generating assignments');
+        return;
+      }
+      
+      if (stats.courseCount === 0) {
+        alert('Please add courses before generating assignments');
+        return;
+      }
+
+      // Generate assignments with default weights
+      const assignmentResults = await window.electronAPI.assignment.generate();
+      
+      if (assignmentResults.length === 0) {
+        alert('No assignments could be generated. Please ensure teachers have qualifications that match course topics exactly.');
+        return;
+      }
+
+      // Show success message with summary
+      alert(`Successfully generated ${assignmentResults.length} assignments! Check the Assignments tab to view results.`);
+      
+      // Refresh stats
+      await loadDashboardStats();
+      
+    } catch (error) {
+      console.error('Failed to generate assignments:', error);
+      alert('Failed to generate assignments: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
