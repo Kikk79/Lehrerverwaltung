@@ -129,6 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Major Features | TODO Items | Git Commits |
 |---------|------|----------------|------------|-------------|
+| 0.3.0   | 2025-08-30 | Complete SQLite database layer implementation | 14+ tasks completed | b5eb655 |
 | 0.2.0   | 2025-08-30 | Complete Electron + React + TypeScript infrastructure | 15+ tasks completed | 98d3878 |
 | 0.1.0   | 2025-08-30 | Project planning & documentation | 90+ tasks defined | Initial setup |
 
@@ -138,7 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Current Status
 - **Phase**: Database Layer Complete ✅ → Core Features Development 🔄
-- **Last Commit**: 98d3878 - Complete Electron + React + TypeScript infrastructure
+- **Last Commit**: b5eb655 - Complete SQLite database layer implementation
 - **Completed Tasks**: DB-001 to DB-014 (All database functionality implemented)
 - **Ready for Parallel**: UI components, AI integration, Calendar implementation
 
