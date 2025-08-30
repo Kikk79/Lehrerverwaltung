@@ -1,7 +1,15 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
-import { Teacher, Course, Assignment, AppSettings } from '../types';
+import { 
+  Teacher, 
+  Course, 
+  Assignment, 
+  AppSettings, 
+  WeightingSettings, 
+  ChatMessage, 
+  ChatConversation 
+} from '../types';
 
 /**
  * Database service for managing SQLite operations
@@ -395,18 +403,263 @@ export class DatabaseService {
     }
   }
 
+  // WEIGHTING SETTINGS OPERATIONS
+  
   /**
-   * Get database statistics
+   * Create weighting settings profile
    */
-  public getStats(): { teachers: number; courses: number; assignments: number } {
+  public createWeightingSettings(settings: Omit<WeightingSettings, 'id' | 'created_at'>): WeightingSettings {
+    const stmt = this.db.prepare(`
+      INSERT INTO weighting_settings (profile_name, equality_weight, continuity_weight, loyalty_weight, is_default)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    
+    const result = stmt.run(
+      settings.profile_name,
+      settings.equality_weight,
+      settings.continuity_weight,
+      settings.loyalty_weight,
+      settings.is_default ? 1 : 0
+    );
+
+    return this.getWeightingSettings(result.lastInsertRowid as number)!;
+  }
+
+  /**
+   * Get weighting settings by ID
+   */
+  public getWeightingSettings(id: number): WeightingSettings | null {
+    const stmt = this.db.prepare('SELECT * FROM weighting_settings WHERE id = ?');
+    const row = stmt.get(id) as any;
+    
+    if (!row) return null;
+    
+    return {
+      id: row.id,
+      profile_name: row.profile_name,
+      equality_weight: row.equality_weight,
+      continuity_weight: row.continuity_weight,
+      loyalty_weight: row.loyalty_weight,
+      is_default: row.is_default === 1,
+      created_at: row.created_at
+    };
+  }
+
+  /**
+   * Get default weighting settings
+   */
+  public getDefaultWeightingSettings(): WeightingSettings | null {
+    const stmt = this.db.prepare('SELECT * FROM weighting_settings WHERE is_default = 1');
+    const row = stmt.get() as any;
+    
+    if (!row) return null;
+    
+    return {
+      id: row.id,
+      profile_name: row.profile_name,
+      equality_weight: row.equality_weight,
+      continuity_weight: row.continuity_weight,
+      loyalty_weight: row.loyalty_weight,
+      is_default: true,
+      created_at: row.created_at
+    };
+  }
+
+  /**
+   * Get all weighting settings profiles
+   */
+  public getAllWeightingSettings(): WeightingSettings[] {
+    const stmt = this.db.prepare('SELECT * FROM weighting_settings ORDER BY is_default DESC, profile_name');
+    const rows = stmt.all() as any[];
+    
+    return rows.map(row => ({
+      id: row.id,
+      profile_name: row.profile_name,
+      equality_weight: row.equality_weight,
+      continuity_weight: row.continuity_weight,
+      loyalty_weight: row.loyalty_weight,
+      is_default: row.is_default === 1,
+      created_at: row.created_at
+    }));
+  }
+
+  /**
+   * Update weighting settings
+   */
+  public updateWeightingSettings(id: number, updates: Partial<WeightingSettings>): WeightingSettings | null {
+    const currentSettings = this.getWeightingSettings(id);
+    if (!currentSettings) return null;
+
+    const stmt = this.db.prepare(`
+      UPDATE weighting_settings 
+      SET profile_name = ?, equality_weight = ?, continuity_weight = ?, loyalty_weight = ?, is_default = ?
+      WHERE id = ?
+    `);
+    
+    stmt.run(
+      updates.profile_name ?? currentSettings.profile_name,
+      updates.equality_weight ?? currentSettings.equality_weight,
+      updates.continuity_weight ?? currentSettings.continuity_weight,
+      updates.loyalty_weight ?? currentSettings.loyalty_weight,
+      (updates.is_default ?? currentSettings.is_default) ? 1 : 0,
+      id
+    );
+
+    return this.getWeightingSettings(id);
+  }
+
+  /**
+   * Delete weighting settings profile
+   */
+  public deleteWeightingSettings(id: number): boolean {
+    const stmt = this.db.prepare('DELETE FROM weighting_settings WHERE id = ?');
+    const result = stmt.run(id);
+    return result.changes > 0;
+  }
+
+  // CHAT OPERATIONS
+  
+  /**
+   * Save chat message to history
+   */
+  public saveChatMessage(message: Omit<ChatMessage, 'id' | 'timestamp'>): ChatMessage {
+    const stmt = this.db.prepare(`
+      INSERT INTO chat_history (conversation_id, message_type, message_content, context_data)
+      VALUES (?, ?, ?, ?)
+    `);
+    
+    const result = stmt.run(
+      message.conversation_id,
+      message.message_type,
+      message.message_content,
+      message.context_data || null
+    );
+
+    return this.getChatMessage(result.lastInsertRowid as number)!;
+  }
+
+  /**
+   * Get chat message by ID
+   */
+  public getChatMessage(id: number): ChatMessage | null {
+    const stmt = this.db.prepare('SELECT * FROM chat_history WHERE id = ?');
+    const row = stmt.get(id) as any;
+    
+    if (!row) return null;
+    
+    return {
+      id: row.id,
+      conversation_id: row.conversation_id,
+      message_type: row.message_type,
+      message_content: row.message_content,
+      context_data: row.context_data,
+      timestamp: row.timestamp
+    };
+  }
+
+  /**
+   * Get all messages for a conversation
+   */
+  public getChatMessages(conversationId: string): ChatMessage[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM chat_history 
+      WHERE conversation_id = ? 
+      ORDER BY timestamp ASC
+    `);
+    const rows = stmt.all(conversationId) as any[];
+    
+    return rows.map(row => ({
+      id: row.id,
+      conversation_id: row.conversation_id,
+      message_type: row.message_type,
+      message_content: row.message_content,
+      context_data: row.context_data,
+      timestamp: row.timestamp
+    }));
+  }
+
+  /**
+   * Save chat conversation metadata
+   */
+  public saveChatConversation(conversation: Omit<ChatConversation, 'messages' | 'created_at' | 'updated_at'>): void {
+    const stmt = this.db.prepare(`
+      INSERT OR REPLACE INTO chat_conversations (id, title, context_snapshot)
+      VALUES (?, ?, ?)
+    `);
+    
+    stmt.run(
+      conversation.id,
+      conversation.title,
+      JSON.stringify(conversation.context)
+    );
+  }
+
+  /**
+   * Get all chat conversations
+   */
+  public getAllChatConversations(): ChatConversation[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM chat_conversations 
+      ORDER BY updated_at DESC
+    `);
+    const rows = stmt.all() as any[];
+    
+    return rows.map(row => ({
+      id: row.id,
+      title: row.title,
+      messages: this.getChatMessages(row.id),
+      context: JSON.parse(row.context_snapshot || '{}'),
+      created_at: row.created_at,
+      updated_at: row.updated_at
+    }));
+  }
+
+  /**
+   * Delete chat conversation and all its messages
+   */
+  public deleteChatConversation(conversationId: string): boolean {
+    const deleteMessages = this.db.prepare('DELETE FROM chat_history WHERE conversation_id = ?');
+    const deleteConversation = this.db.prepare('DELETE FROM chat_conversations WHERE id = ?');
+    
+    const transaction = this.db.transaction(() => {
+      deleteMessages.run(conversationId);
+      deleteConversation.run(conversationId);
+    });
+
+    try {
+      transaction();
+      return true;
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get database statistics including AI tables
+   */
+  public getStats(): { 
+    teachers: number; 
+    courses: number; 
+    assignments: number;
+    weighting_profiles: number;
+    chat_conversations: number;
+    chat_messages: number;
+  } {
     const teacherCount = this.db.prepare('SELECT COUNT(*) as count FROM teachers').get() as any;
     const courseCount = this.db.prepare('SELECT COUNT(*) as count FROM courses').get() as any;
     const assignmentCount = this.db.prepare('SELECT COUNT(*) as count FROM assignments').get() as any;
+    const weightingCount = this.db.prepare('SELECT COUNT(*) as count FROM weighting_settings').get() as any;
+    const conversationCount = this.db.prepare('SELECT COUNT(*) as count FROM chat_conversations').get() as any;
+    const messageCount = this.db.prepare('SELECT COUNT(*) as count FROM chat_history').get() as any;
     
     return {
       teachers: teacherCount.count,
       courses: courseCount.count,
-      assignments: assignmentCount.count
+      assignments: assignmentCount.count,
+      weighting_profiles: weightingCount.count,
+      chat_conversations: conversationCount.count,
+      chat_messages: messageCount.count
     };
   }
 }
