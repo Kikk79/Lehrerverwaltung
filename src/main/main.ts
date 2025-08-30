@@ -1,18 +1,31 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import { MainDatabaseHandler } from './database';
+import { MainFileOperationsHandler } from './fileOperations';
+import { AnthropicService } from '../shared/services/AnthropicService';
 
 class TeacherAssignmentApp {
   private mainWindow: BrowserWindow | null = null;
   private databaseHandler!: MainDatabaseHandler;
+  private fileOperationsHandler!: MainFileOperationsHandler;
+  private aiService!: AnthropicService;
 
   constructor() {
     this.init();
   }
 
   private init(): void {
-    app.whenReady().then(() => {
+    app.whenReady().then(async () => {
       this.databaseHandler = new MainDatabaseHandler();
+      this.aiService = new AnthropicService();
+      this.fileOperationsHandler = new MainFileOperationsHandler(
+        this.databaseHandler.getDatabaseService(),
+        this.aiService
+      );
+      
+      // Initialize AI service with stored settings
+      await this.fileOperationsHandler.initializeServices();
+      
       this.createWindow();
       this.registerIpcHandlers();
     });
@@ -20,6 +33,7 @@ class TeacherAssignmentApp {
     app.on('window-all-closed', () => {
       if (process.platform !== 'darwin') {
         this.databaseHandler?.close();
+        this.fileOperationsHandler?.cleanup();
         app.quit();
       }
     });

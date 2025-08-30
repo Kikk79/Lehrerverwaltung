@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Teacher, Course, Assignment } from '../../../shared/types';
+import ImportWizard from '../import/ImportWizard';
+import ExportDialog from '../export/ExportDialog';
 
 interface DashboardStats {
   teacherCount: number;
@@ -17,6 +19,8 @@ const Dashboard: React.FC = () => {
   });
 
   const [loading, setLoading] = useState(true);
+  const [showImportWizard, setShowImportWizard] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   useEffect(() => {
     loadDashboardStats();
@@ -172,7 +176,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* AI Assignment Generation */}
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Assignment Generation</h3>
@@ -182,44 +186,82 @@ const Dashboard: React.FC = () => {
           </p>
           <button 
             onClick={handleGenerateAssignments}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={loading}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Generate Assignments
           </button>
         </div>
 
-        {/* Recent Activity */}
+        {/* Data Import */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            {stats.teacherCount === 0 && stats.courseCount === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-gray-500 mb-2">No activity yet</p>
-                <p className="text-sm text-gray-400">
-                  Start by adding teachers and courses
-                </p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Daten importieren</h3>
+          <p className="text-gray-600 mb-4">
+            Importieren Sie Lehrer-, Kurs- oder Zuweisungsdaten aus CSV-Dateien.
+            Die KI hilft bei der automatischen Spaltenzuordnung.
+          </p>
+          <button 
+            onClick={() => setShowImportWizard(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            CSV importieren
+          </button>
+        </div>
+
+        {/* Data Export */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Daten exportieren</h3>
+          <p className="text-gray-600 mb-4">
+            Exportieren Sie Ihre Daten in verschiedene Formate: iCal, CSV, PDF oder JSON
+            für weitere Verwendung oder Backup.
+          </p>
+          <button 
+            onClick={() => setShowExportDialog(true)}
+            disabled={stats.teacherCount === 0 && stats.courseCount === 0 && stats.assignmentCount === 0}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Daten exportieren
+          </button>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+        <div className="space-y-3">
+          {stats.teacherCount === 0 && stats.courseCount === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-gray-500 mb-2">No activity yet</p>
+              <p className="text-sm text-gray-400">
+                Start by adding teachers and courses or importing data
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center text-sm">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                <span className="text-gray-600">Database initialized</span>
               </div>
-            ) : (
-              <div className="space-y-2">
+              {stats.teacherCount > 0 && (
                 <div className="flex items-center text-sm">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
-                  <span className="text-gray-600">Database initialized</span>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
+                  <span className="text-gray-600">{stats.teacherCount} teachers loaded</span>
                 </div>
-                {stats.teacherCount > 0 && (
-                  <div className="flex items-center text-sm">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
-                    <span className="text-gray-600">{stats.teacherCount} teachers loaded</span>
-                  </div>
-                )}
-                {stats.courseCount > 0 && (
-                  <div className="flex items-center text-sm">
-                    <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
-                    <span className="text-gray-600">{stats.courseCount} courses loaded</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+              )}
+              {stats.courseCount > 0 && (
+                <div className="flex items-center text-sm">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                  <span className="text-gray-600">{stats.courseCount} courses loaded</span>
+                </div>
+              )}
+              {stats.assignmentCount > 0 && (
+                <div className="flex items-center text-sm">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                  <span className="text-gray-600">{stats.assignmentCount} assignments created</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -246,6 +288,30 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       ) : null}
+
+      {/* Import/Export Dialogs */}
+      <ImportWizard 
+        isOpen={showImportWizard} 
+        onClose={() => setShowImportWizard(false)}
+        onImportComplete={(result) => {
+          console.log('Import completed:', result);
+          loadDashboardStats(); // Refresh stats after import
+          if (result.success) {
+            alert(`Import erfolgreich! ${result.imported_count} Einträge importiert.`);
+          }
+        }}
+      />
+      
+      <ExportDialog 
+        isOpen={showExportDialog} 
+        onClose={() => setShowExportDialog(false)}
+        onExportComplete={(result) => {
+          console.log('Export completed:', result);
+          if (result.success) {
+            alert(`Export erfolgreich! ${result.exported_count} Einträge exportiert.`);
+          }
+        }}
+      />
     </div>
   );
 };

@@ -1,5 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { Teacher, Course, Assignment } from '../shared/types';
+import { Teacher, Course, Assignment, ExportOptions } from '../shared/types';
+import { CSVImportOptions } from '../shared/services/FileImportService';
+import { SaveDialogOptions } from '../shared/services/FileExportService';
 
 const electronAPI = {
   getVersion: () => ipcRenderer.invoke('app:getVersion'),
@@ -50,6 +52,70 @@ const electronAPI = {
 
     // Utility operations
     getStats: () => ipcRenderer.invoke('db:getStats')
+  },
+
+  // File Import operations
+  fileImport: {
+    showFilePickerDialog: () => ipcRenderer.invoke('fileImport:showFilePickerDialog'),
+    parseCSVFile: (filePath: string, options?: Partial<CSVImportOptions>) => 
+      ipcRenderer.invoke('fileImport:parseCSVFile', filePath, options),
+    performBatchImport: (options: CSVImportOptions, onProgress?: (progress: any) => void) => {
+      // Set up progress listener
+      if (onProgress) {
+        const progressHandler = (_: any, progress: any) => onProgress(progress);
+        ipcRenderer.on('fileImport:progress', progressHandler);
+        
+        // Clean up listener after import
+        const cleanup = () => ipcRenderer.removeListener('fileImport:progress', progressHandler);
+        
+        return ipcRenderer.invoke('fileImport:performBatchImport', options)
+          .finally(cleanup);
+      }
+      return ipcRenderer.invoke('fileImport:performBatchImport', options);
+    },
+    handleError: (error: any) => ipcRenderer.invoke('fileImport:handleError', error)
+  },
+
+  // File Export operations
+  fileExport: {
+    showSaveDialog: (options: SaveDialogOptions) => ipcRenderer.invoke('fileExport:showSaveDialog', options),
+    exportData: (exportOptions: ExportOptions, filePath?: string, onProgress?: (progress: any) => void) => {
+      // Set up progress listener
+      if (onProgress) {
+        const progressHandler = (_: any, progress: any) => onProgress(progress);
+        ipcRenderer.on('fileExport:progress', progressHandler);
+        
+        // Clean up listener after export
+        const cleanup = () => ipcRenderer.removeListener('fileExport:progress', progressHandler);
+        
+        return ipcRenderer.invoke('fileExport:exportData', exportOptions, filePath)
+          .finally(cleanup);
+      }
+      return ipcRenderer.invoke('fileExport:exportData', exportOptions, filePath);
+    },
+    exportToiCal: (options: ExportOptions, filePath?: string) => 
+      ipcRenderer.invoke('fileExport:exportToiCal', options, filePath),
+    exportToCSV: (options: ExportOptions, filePath?: string) => 
+      ipcRenderer.invoke('fileExport:exportToCSV', options, filePath),
+    exportToPDF: (options: ExportOptions, filePath?: string) => 
+      ipcRenderer.invoke('fileExport:exportToPDF', options, filePath),
+    exportToJSON: (options: ExportOptions, filePath?: string) => 
+      ipcRenderer.invoke('fileExport:exportToJSON', options, filePath),
+    getAvailableFormats: () => ipcRenderer.invoke('fileExport:getAvailableFormats'),
+    validateExportOptions: (options: ExportOptions) => 
+      ipcRenderer.invoke('fileExport:validateExportOptions', options),
+    handleError: (error: any) => ipcRenderer.invoke('fileExport:handleError', error)
+  },
+
+  // File Operations utilities
+  fileOperations: {
+    getStats: () => ipcRenderer.invoke('fileOperations:getStats')
+  },
+
+  // Assignment operations
+  assignment: {
+    generate: (weights?: any, constraints?: any) => ipcRenderer.invoke('assignment:generate', weights, constraints),
+    getQualificationMatches: () => ipcRenderer.invoke('assignment:getQualificationMatches')
   }
 };
 

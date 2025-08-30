@@ -42,6 +42,32 @@ interface ElectronAPI {
     generate: (weights?: any, constraints?: any) => Promise<any[]>;
     getQualificationMatches: () => Promise<any[]>;
   };
+
+  // File Import operations
+  fileImport: {
+    showFilePickerDialog: () => Promise<string | null>;
+    parseCSVFile: (filePath: string, options?: any) => Promise<any>;
+    performBatchImport: (options: any, onProgress?: (progress: any) => void) => Promise<any>;
+    handleError: (error: any) => Promise<any>;
+  };
+
+  // File Export operations
+  fileExport: {
+    showSaveDialog: (options: any) => Promise<string | null>;
+    exportData: (exportOptions: any, filePath?: string, onProgress?: (progress: any) => void) => Promise<any>;
+    exportToiCal: (options: any, filePath?: string) => Promise<any>;
+    exportToCSV: (options: any, filePath?: string) => Promise<any>;
+    exportToPDF: (options: any, filePath?: string) => Promise<any>;
+    exportToJSON: (options: any, filePath?: string) => Promise<any>;
+    getAvailableFormats: () => Promise<string[]>;
+    validateExportOptions: (options: any) => Promise<{ valid: boolean; error?: string }>;
+    handleError: (error: any) => Promise<any>;
+  };
+
+  // File Operations utilities
+  fileOperations: {
+    getStats: () => Promise<any>;
+  };
 }
 
 declare global {
