@@ -352,3 +352,4 @@ npm run dist         # Create installers
 *Last Updated: 2025-08-30*
 *Next Review: When major milestones are completed*
 - ALWAYS COMMIT TO GITHUB AFTER IMPLEMENTING FEATURES OR REACHING MILESTONES
+- -----------------ALWAYS KEEP TODO.MD AND CHANGELOG.MD UP-TO-DATE-----------
