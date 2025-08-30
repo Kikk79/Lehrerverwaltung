@@ -69,9 +69,11 @@ src/
 ### Core Services
 
 - **DatabaseService**: SQLite operations and migrations
-- **AssignmentService**: Teacher-course matching algorithms
-- **AnthropicService**: AI API integration
+- **AssignmentService**: Teacher-course matching algorithms with weighting system
+- **AnthropicService**: AI API integration and chat functionality
 - **CalendarService**: Event management and synchronization
+- **WeightingService**: AI weighting configuration and calculation
+- **ChatService**: Interactive AI communication for special cases
 
 ---
 
@@ -138,6 +140,27 @@ CREATE TABLE app_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+-- AI weighting configuration
+CREATE TABLE weighting_settings (
+    id INTEGER PRIMARY KEY,
+    profile_name TEXT NOT NULL,           -- e.g., "Normal", "Emergency", "Custom"
+    equality_weight INTEGER DEFAULT 33,   -- 0-100% for equal distribution
+    continuity_weight INTEGER DEFAULT 33, -- 0-100% for lesson continuity  
+    loyalty_weight INTEGER DEFAULT 34,    -- 0-100% for teacher-class loyalty
+    is_default BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AI chat history
+CREATE TABLE chat_history (
+    id INTEGER PRIMARY KEY,
+    conversation_id TEXT NOT NULL,
+    message_type TEXT NOT NULL,          -- 'user' or 'assistant'
+    message_content TEXT NOT NULL,
+    context_data TEXT,                   -- JSON with assignment context
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ---
@@ -179,6 +202,34 @@ Respond with optimized assignments and rationale.
 - **API Key Storage**: Encrypted local storage
 - **System Prompt**: User-customizable prompts
 - **Response Caching**: Local caching for performance
+
+### AI Weighting System
+
+The AI assignment system uses three configurable weighting parameters to optimize teacher-course assignments:
+
+1. **Gleichmäßigkeit (Equal Distribution Weight)**: 0-100%
+   - Controls how evenly workload is distributed across all teachers
+   - Higher values prioritize equal hours for all teachers
+   - Lower values allow more flexible assignment patterns
+
+2. **Kontinuität (Continuity Weight)**: 0-100%
+   - Prioritizes consecutive lesson scheduling for individual teachers
+   - Higher values group lessons together (e.g., 3 hours in a row)
+   - Lower values allow scattered lesson timing throughout the day
+
+3. **Lehrertreue (Teacher Loyalty Weight)**: 0-100%
+   - Ensures teachers stay with their assigned classes/courses
+   - Normally set to 100% for maximum consistency
+   - Can be reduced for emergency situations (illness, substitutions)
+
+### AI Chat Interface
+
+Interactive chat system for handling special cases and assignment discussions:
+
+- **Context-Aware Communication**: Chat maintains context of current assignments
+- **Special Case Handling**: Direct discussion of scheduling conflicts or requirements
+- **Real-Time Assignment Modification**: Chat-based workflow for making adjustments
+- **History Persistence**: All chat conversations saved for future reference
 
 ---
 
@@ -228,6 +279,32 @@ README.md      # → User-facing documentation
 - **Exact qualification Match**: No partial or approximate matching allowed
 - **Availability Respect**: Never assign outside teacher's working hours
 - **Fairness Priority**: Distribute workload as evenly as possible
+
+### Weighting Algorithm Integration
+
+The assignment algorithm incorporates three user-configurable weights:
+
+1. **Equal Distribution Scoring**:
+   - Calculate variance in total teaching hours across all teachers
+   - Score inversely proportional to variance (lower variance = higher score)
+   - Weight: 0-100% influence on final assignment score
+
+2. **Continuity Scoring**:
+   - Identify lesson gaps for each teacher's daily schedule
+   - Score based on consecutive lesson blocks vs. scattered lessons
+   - Penalize gaps between lessons, reward consecutive blocks
+
+3. **Teacher Loyalty Scoring**:
+   - Track teacher-class consistency over time
+   - Maximum score for maintaining existing teacher-class relationships
+   - Reduced weight allows emergency reassignments when necessary
+
+**Final Score Calculation**:
+```
+FinalScore = (EqualityScore × EqualityWeight) + 
+             (ContinuityScore × ContinuityWeight) + 
+             (LoyaltyScore × LoyaltyWeight)
+```
 
 ---
 
@@ -379,6 +456,12 @@ npm run dist         # Create installers
 - ✅ Calendar displays assignments with full interactivity
 - ✅ CSV import/export works with AI assistance
 - ✅ All data persists locally in SQLite
+
+---
+
+## Quality & User Experience
+
+**NO Tradeoff in quality by reducing AI Usage, we want the best possible user experience.**
 
 ---
 

@@ -103,6 +103,22 @@
 - [ ] **AI-009**: Create system prompt customization interface
 - [ ] **AI-010**: Implement AI response caching for performance
 
+### AI Weighting System
+
+- [ ] **AI-011**: Implement AI weighting system for assignment optimization
+- [ ] **AI-012**: Create weighting algorithm for equal teacher workload distribution (Gleichmäßigkeit)
+- [ ] **AI-013**: Implement continuity weighting for consecutive lesson scheduling (Kontinuität)
+- [ ] **AI-014**: Add teacher-class loyalty weighting with emergency override (Lehrertreue)
+- [ ] **AI-015**: Create weighted scoring system that combines all three factors
+- [ ] **AI-016**: Implement chat interface for AI communication and special case handling
+
+### AI Chat Integration
+
+- [ ] **AI-017**: Create ChatService class for interactive AI communication
+- [ ] **AI-018**: Implement context-aware chat for assignment discussions
+- [ ] **AI-019**: Add chat history persistence and management
+- [ ] **AI-020**: Create chat-based assignment modification workflow
+
 ---
 
 ## 5. CALENDAR IMPLEMENTATION (FULLCALENDAR) 📅
@@ -156,6 +172,15 @@
 - [ ] **UI-013**: Add ConfirmationDialog for destructive actions
 - [ ] **UI-014**: Create ErrorBoundary for error handling
 
+### AI Weighting & Chat UI
+
+- [ ] **UI-015**: Create WeightingPanel component with three sliders (Gleichmäßigkeit, Kontinuität, Lehrertreue)
+- [ ] **UI-016**: Implement ChatInterface component for AI communication
+- [ ] **UI-017**: Add WeightingPresets for quick configuration scenarios
+- [ ] **UI-018**: Create ChatHistory component with conversation management
+- [ ] **UI-019**: Implement WeightingVisualization to show impact of settings
+- [ ] **UI-020**: Add ChatPromptSuggestions for common special cases
+
 ---
 
 ## 7. FILE IMPORT/EXPORT FEATURES 📁
@@ -195,6 +220,14 @@
 - [ ] **SET-008**: Implement language localization support
 - [ ] **SET-009**: Add data backup preferences
 - [ ] **SET-010**: Create settings import/export
+
+### AI Weighting Settings
+
+- [ ] **SET-011**: Create WeightingSettings storage and management
+- [ ] **SET-012**: Implement default weighting profiles (Normal, Emergency, Balanced)
+- [ ] **SET-013**: Add weighting settings validation and constraints
+- [ ] **SET-014**: Create user-defined weighting presets functionality
+- [ ] **SET-015**: Implement weighting settings history and undo capability
 
 ---
 
@@ -248,16 +281,16 @@
 
 ### High Priority Parallel Tasks
 
-- **Agent 1**: Database setup (DB-001 to DB-014)
+- **Agent 1**: Database setup (DB-001 to DB-014) ✅ COMPLETE
 - **Agent 2**: Core algorithm implementation (ALGO-001 to ALGO-010)
-- **Agent 3**: UI component development (UI-001 to UI-014)
-- **Agent 4**: AI integration (AI-001 to AI-010)
+- **Agent 3**: UI component development (UI-001 to UI-020)
+- **Agent 4**: AI integration & weighting system (AI-001 to AI-020)
 
 ### Medium Priority Parallel Tasks
 
 - **Agent 5**: File operations (FILE-001 to FILE-010)
 - **Agent 6**: Calendar implementation (CAL-001 to CAL-013)
-- **Agent 7**: Settings management (SET-001 to SET-010)
+- **Agent 7**: Settings management (SET-001 to SET-015)
 
 ### Final Phase Parallel Tasks
 
