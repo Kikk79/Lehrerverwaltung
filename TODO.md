@@ -187,19 +187,19 @@
 
 ### CSV Import
 
-- [ ] **FILE-001**: Create CSV file picker dialog
-- [ ] **FILE-002**: Implement CSV parsing with validation
-- [ ] **FILE-003**: Add AI-powered CSV column mapping
-- [ ] **FILE-004**: Create import preview interface
-- [ ] **FILE-005**: Implement batch import with progress tracking
+- [x] **FILE-001**: Create CSV file picker dialog ✅
+- [x] **FILE-002**: Implement CSV parsing with validation ✅
+- [x] **FILE-003**: Add AI-powered CSV column mapping ✅
+- [x] **FILE-004**: Create import preview interface ✅
+- [x] **FILE-005**: Implement batch import with progress tracking ✅
 
 ### Export Features
 
-- [ ] **FILE-006**: Create iCal export functionality
-- [ ] **FILE-007**: Implement CSV export for assignments
-- [ ] **FILE-008**: Add PDF export for calendar views
-- [ ] **FILE-009**: Create export configuration dialog
-- [ ] **FILE-010**: Implement file save dialog integration
+- [x] **FILE-006**: Create iCal export functionality ✅
+- [x] **FILE-007**: Implement CSV export for assignments ✅
+- [x] **FILE-008**: Add PDF export for calendar views ✅
+- [x] **FILE-009**: Create export configuration dialog ✅
+- [x] **FILE-010**: Implement file save dialog integration ✅
 
 ---
 
