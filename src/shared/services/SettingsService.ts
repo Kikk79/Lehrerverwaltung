@@ -1,5 +1,18 @@
-import { DatabaseService } from './DatabaseService';
-import { WeightingSettings, AppSettings, ModelConfig, ThemeSettings } from '../types';
+import { WeightingSettings } from '../types';
+// In the renderer, use the IPC-backed database exposed by preload (window.electronAPI.database)
+// In non-renderer (main) contexts, lazily load the local DatabaseService implementation without bundling it into the renderer.
+const isRenderer = typeof process !== 'undefined' && (process as any)?.type === 'renderer';
+let FallbackDatabaseService: any = null;
+if (!isRenderer) {
+  try {
+    // Use eval('require') so webpack doesn't statically include this in renderer bundles
+    // eslint-disable-next-line no-eval
+    const nodeRequire = eval('require');
+    FallbackDatabaseService = nodeRequire('./DatabaseService').DatabaseService;
+  } catch {
+    FallbackDatabaseService = null;
+  }
+}
 
 /**
  * Service for managing all application settings
@@ -7,10 +20,13 @@ import { WeightingSettings, AppSettings, ModelConfig, ThemeSettings } from '../t
  */
 export class SettingsService {
   private static instance: SettingsService;
-  private databaseService: DatabaseService;
+  private databaseService: any;
 
   private constructor() {
-    this.databaseService = DatabaseService.getInstance();
+    const maybeElectronDB = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+      ? (window as any).electronAPI.database
+      : null;
+    this.databaseService = maybeElectronDB || (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
   }
 
   public static getInstance(): SettingsService {
@@ -42,10 +58,17 @@ export class SettingsService {
    */
   async getApiKey(): Promise<string | null> {
     try {
-      const encrypted = await this.databaseService.getSetting('anthropic_api_key');
+      // Do not expose secret env value to renderer via code; only DB value is returned here
+      const encrypted = await this.databaseService.getSetting('anthropic_api_key')
+        || await this.databaseService.getSetting('ai_api_key');
       if (!encrypted) return null;
       
-      return Buffer.from(encrypted, 'base64').toString('utf8');
+      try {
+        const decoded = Buffer.from(encrypted, 'base64').toString('utf8');
+        return decoded.startsWith('sk-ant-') ? decoded : encrypted;
+      } catch {
+        return encrypted;
+      }
     } catch (error) {
       console.error('Error retrieving API key:', error);
       return null;
@@ -57,11 +80,15 @@ export class SettingsService {
    */
   async testApiConnection(): Promise<boolean> {
     try {
-      const apiKey = await this.getApiKey();
-      if (!apiKey) return false;
-
-      // Basic connectivity test - we'll implement this when we integrate with AnthropicService
-      return true;
+      // Prefer main-process connectivity test so env var can be used securely
+      const hasIpc = typeof window !== 'undefined' && (window as any)?.electronAPI?.ai?.testConnection;
+      if (hasIpc) {
+        return await (window as any).electronAPI.ai.testConnection();
+      }
+      // Fallback: just check presence of a key in non-renderer contexts
+      const envKey = (typeof process !== 'undefined' && (process as any).env?.ANTHROPIC_API_KEY) ? 'present' : '';
+      const dbKey = await this.getApiKey();
+      return Boolean(envKey || dbKey);
     } catch (error) {
       console.error('API connection test failed:', error);
       return false;
@@ -350,9 +377,12 @@ export class SettingsService {
     const errors: string[] = [];
 
     try {
-      // Validate API key exists
+      // Validate API key exists (consider environment variable)
+      const hasEnv = typeof window !== 'undefined' && (window as any)?.electronAPI?.env ?
+        await (window as any).electronAPI.env.has('ANTHROPIC_API_KEY') :
+        Boolean((typeof process !== 'undefined' && (process as any).env?.ANTHROPIC_API_KEY));
       const apiKey = await this.getApiKey();
-      if (!apiKey) {
+      if (!hasEnv && !apiKey) {
         errors.push('API-Schlüssel ist nicht konfiguriert');
       }
 

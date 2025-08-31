@@ -1,4 +1,15 @@
-import { DatabaseService } from './DatabaseService';
+// Avoid bundling better-sqlite3 into the renderer; only load DatabaseService in non-renderer contexts
+const isRenderer = typeof process !== 'undefined' && (process as any)?.type === 'renderer';
+let FallbackDatabaseService: any = null;
+if (!isRenderer) {
+  try {
+    // eslint-disable-next-line no-eval
+    const nodeRequire = eval('require');
+    FallbackDatabaseService = nodeRequire('./DatabaseService').DatabaseService;
+  } catch {
+    FallbackDatabaseService = null;
+  }
+}
 
 /**
  * Service for managing and customizing AI system prompts
@@ -168,7 +179,10 @@ Be solution-focused and practical. Provide multiple options when possible.`,
   public async getCurrentSystemPrompt(type: PromptType): Promise<string> {
     try {
       const settingKey = `system_prompt_${type}`;
-      const customPrompt = await DatabaseService.getInstance().getSetting(settingKey);
+      const db = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+        ? (window as any).electronAPI.database
+        : (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+      const customPrompt = await db?.getSetting(settingKey);
       
       if (customPrompt) {
         return customPrompt;
@@ -195,7 +209,10 @@ Be solution-focused and practical. Provide multiple options when possible.`,
       }
 
       const settingKey = `system_prompt_${type}`;
-      await DatabaseService.getInstance().setSetting(settingKey, prompt);
+      const db = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+        ? (window as any).electronAPI.database
+        : (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+      await db?.setSetting(settingKey, prompt);
       return true;
     } catch (error) {
       console.error(`Failed to update system prompt for ${type}:`, error);
@@ -214,7 +231,10 @@ Be solution-focused and practical. Provide multiple options when possible.`,
       }
 
       const settingKey = `system_prompt_${type}`;
-      await DatabaseService.getInstance().setSetting(settingKey, defaultPrompt.template);
+      const db = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+        ? (window as any).electronAPI.database
+        : (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+      await db?.setSetting(settingKey, defaultPrompt.template);
       return true;
     } catch (error) {
       console.error(`Failed to reset prompt to default for ${type}:`, error);
@@ -327,11 +347,14 @@ Be solution-focused and practical. Provide multiple options when possible.`,
 
       // Store in database as JSON
       const customPromptsKey = 'custom_prompts';
-      const existingPrompts = await DatabaseService.getInstance().getSetting(customPromptsKey) || '[]';
-      const prompts: CustomPromptTemplate[] = JSON.parse(existingPrompts);
+      const db = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+        ? (window as any).electronAPI.database
+        : (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+      const existingPrompts = await db?.getSetting(customPromptsKey) || '[]';
+      const prompts: CustomPromptTemplate[] = JSON.parse(existingPrompts as string);
       
       prompts.push(customPrompt);
-      await DatabaseService.getInstance().setSetting(customPromptsKey, JSON.stringify(prompts));
+      await db?.setSetting(customPromptsKey, JSON.stringify(prompts));
 
       return customPrompt;
     } catch (error) {
@@ -346,8 +369,11 @@ Be solution-focused and practical. Provide multiple options when possible.`,
   public async getCustomPrompts(): Promise<CustomPromptTemplate[]> {
     try {
       const customPromptsKey = 'custom_prompts';
-      const existingPrompts = await DatabaseService.getInstance().getSetting(customPromptsKey) || '[]';
-      return JSON.parse(existingPrompts);
+      const db = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+        ? (window as any).electronAPI.database
+        : (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+      const existingPrompts = await db?.getSetting(customPromptsKey) || '[]';
+      return JSON.parse(existingPrompts as string);
     } catch (error) {
       console.error('Failed to get custom prompts:', error);
       return [];
@@ -360,11 +386,14 @@ Be solution-focused and practical. Provide multiple options when possible.`,
   public async deleteCustomPrompt(id: string): Promise<boolean> {
     try {
       const customPromptsKey = 'custom_prompts';
-      const existingPrompts = await DatabaseService.getInstance().getSetting(customPromptsKey) || '[]';
-      const prompts: CustomPromptTemplate[] = JSON.parse(existingPrompts);
+      const db = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+        ? (window as any).electronAPI.database
+        : (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+      const existingPrompts = await db?.getSetting(customPromptsKey) || '[]';
+      const prompts: CustomPromptTemplate[] = JSON.parse(existingPrompts as string);
       
       const filteredPrompts = prompts.filter(p => p.id !== id);
-      await DatabaseService.getInstance().setSetting(customPromptsKey, JSON.stringify(filteredPrompts));
+      await db?.setSetting(customPromptsKey, JSON.stringify(filteredPrompts));
       
       return prompts.length !== filteredPrompts.length;
     } catch (error) {

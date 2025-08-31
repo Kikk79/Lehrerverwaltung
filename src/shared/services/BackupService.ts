@@ -1,6 +1,18 @@
-import { DatabaseService } from './DatabaseService';
 import fs from 'fs';
 import path from 'path';
+
+// Avoid bundling better-sqlite3 into the renderer; only load DatabaseService in non-renderer contexts
+const isRenderer = typeof process !== 'undefined' && (process as any)?.type === 'renderer';
+let FallbackDatabaseService: any = null;
+if (!isRenderer) {
+  try {
+    // eslint-disable-next-line no-eval
+    const nodeRequire = eval('require');
+    FallbackDatabaseService = nodeRequire('./DatabaseService').DatabaseService;
+  } catch {
+    FallbackDatabaseService = null;
+  }
+}
 
 /**
  * Service for database backup and restore operations
@@ -8,10 +20,13 @@ import path from 'path';
  */
 export class BackupService {
   private static instance: BackupService;
-  private databaseService: DatabaseService;
+  private db: any;
 
   private constructor() {
-    this.databaseService = DatabaseService.getInstance();
+    const maybeElectronDB = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+      ? (window as any).electronAPI.database
+      : null;
+    this.db = maybeElectronDB || (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
   }
 
   public static getInstance(): BackupService {
@@ -139,7 +154,7 @@ export class BackupService {
   // ===================
 
   private async exportTeachers(): Promise<any[]> {
-    const teachers = this.databaseService.getAllTeachers();
+    const teachers = await this.dbCall<any[]>('getAllTeachers') || [];
     return teachers.map(teacher => ({
       name: teacher.name,
       qualifications: teacher.qualifications,
@@ -148,7 +163,7 @@ export class BackupService {
   }
 
   private async exportCourses(): Promise<any[]> {
-    const courses = this.databaseService.getAllCourses();
+    const courses = await this.dbCall<any[]>('getAllCourses') || [];
     return courses.map(course => ({
       topic: course.topic,
       lessons_count: course.lessons_count,
@@ -159,22 +174,22 @@ export class BackupService {
   }
 
   private async exportAssignments(): Promise<any[]> {
-    const assignments = this.databaseService.getAllAssignments();
-    return assignments.map(assignment => ({
-      teacher_name: this.databaseService.getTeacher(assignment.teacher_id)?.name,
-      course_topic: this.databaseService.getCourse(assignment.course_id)?.topic,
+    const assignments = await this.dbCall<any[]>('getAllAssignments') || [];
+    return Promise.all(assignments.map(async (assignment: any) => ({
+      teacher_name: (await this.dbCall<any>('getTeacher', assignment.teacher_id))?.name,
+      course_topic: (await this.dbCall<any>('getCourse', assignment.course_id))?.topic,
       scheduled_slots: assignment.scheduled_slots,
       status: assignment.status,
       ai_rationale: assignment.ai_rationale
-    }));
+    })));
   }
 
   private async exportSettings(): Promise<Record<string, string>> {
-    return this.databaseService.getAllSettings();
+    return await this.dbCall<Record<string, string>>('getAllSettings') || {} as Record<string, string>;
   }
 
   private async exportWeightingSettings(): Promise<any[]> {
-    const weightingSettings = this.databaseService.getWeightingPresets();
+    const weightingSettings = await this.dbCall<any[]>('getWeightingPresets') || [];
     return weightingSettings.map(setting => ({
       profile_name: setting.profile_name,
       equality_weight: setting.equality_weight,
@@ -185,13 +200,13 @@ export class BackupService {
   }
 
   private async exportChatHistory(): Promise<any[]> {
-    const conversations = this.databaseService.getAllChatConversations();
-    return conversations.map(conversation => ({
+    const conversations = await this.dbCall<any[]>('getAllChatConversations') || [];
+    return Promise.all(conversations.map(async (conversation: any) => ({
       id: conversation.id,
       title: conversation.title,
       context: conversation.context,
-      messages: this.databaseService.getChatMessages(conversation.id)
-    }));
+      messages: await this.dbCall<any[]>('getChatMessages', conversation.id)
+    })));
   }
 
   // ===================
@@ -200,13 +215,13 @@ export class BackupService {
 
   private async importSettings(settings: Record<string, string>): Promise<void> {
     for (const [key, value] of Object.entries(settings)) {
-      this.databaseService.setSetting(key, value);
+      await this.dbCall('setSetting', key, value);
     }
   }
 
   private async importWeightingSettings(weightingSettings: any[]): Promise<void> {
     for (const setting of weightingSettings) {
-      this.databaseService.saveWeightingPreset({
+      await this.dbCall('saveWeightingPreset', {
         profile_name: setting.profile_name,
         equality_weight: setting.equality_weight,
         continuity_weight: setting.continuity_weight,
@@ -218,7 +233,7 @@ export class BackupService {
 
   private async importTeachers(teachers: any[]): Promise<void> {
     for (const teacher of teachers) {
-      this.databaseService.createTeacher({
+      await this.dbCall('createTeacher', {
         name: teacher.name,
         qualifications: teacher.qualifications,
         working_times: teacher.working_times
@@ -228,7 +243,7 @@ export class BackupService {
 
   private async importCourses(courses: any[]): Promise<void> {
     for (const course of courses) {
-      this.databaseService.createCourse({
+      await this.dbCall('createCourse', {
         topic: course.topic,
         lessons_count: course.lessons_count,
         lesson_duration: course.lesson_duration,
@@ -241,14 +256,14 @@ export class BackupService {
   private async importAssignments(assignments: any[]): Promise<void> {
     for (const assignment of assignments) {
       // Find teacher and course by name/topic
-      const teachers = this.databaseService.getAllTeachers();
-      const courses = this.databaseService.getAllCourses();
+      const teachers = await this.dbCall<any[]>('getAllTeachers') || [];
+      const courses = await this.dbCall<any[]>('getAllCourses') || [];
 
       const teacher = teachers.find(t => t.name === assignment.teacher_name);
       const course = courses.find(c => c.topic === assignment.course_topic);
 
       if (teacher && course) {
-        this.databaseService.createAssignment({
+        await this.dbCall('createAssignment', {
           teacher_id: teacher.id,
           course_id: course.id,
           scheduled_slots: assignment.scheduled_slots,
@@ -262,7 +277,7 @@ export class BackupService {
   private async importChatHistory(chatHistory: any[]): Promise<void> {
     for (const conversation of chatHistory) {
       // Save conversation metadata
-      this.databaseService.saveChatConversation({
+      await this.dbCall('saveChatConversation', {
         id: conversation.id,
         title: conversation.title,
         context: conversation.context
@@ -271,7 +286,7 @@ export class BackupService {
       // Save messages
       if (conversation.messages) {
         for (const message of conversation.messages) {
-          this.databaseService.saveChatMessage({
+          await this.dbCall('saveChatMessage', {
             conversation_id: conversation.id,
             message_type: message.message_type,
             message_content: message.message_content,
@@ -292,14 +307,37 @@ export class BackupService {
   async clearAllData(): Promise<void> {
     try {
       // Delete in reverse order to respect foreign key constraints
-      this.databaseService.execute('DELETE FROM chat_history');
-      this.databaseService.execute('DELETE FROM chat_conversations');
-      this.databaseService.execute('DELETE FROM assignments');
-      this.databaseService.execute('DELETE FROM courses');
-      this.databaseService.execute('DELETE FROM teachers');
-      this.databaseService.execute('DELETE FROM weighting_settings');
-      this.databaseService.execute('DELETE FROM app_settings WHERE key != "settings_initialized"');
-      
+      // If a raw execute method exists (main process), use it; otherwise fall back to per-entity deletion via IPC
+      if (this.db && typeof this.db.execute === 'function') {
+        await this.db.execute('DELETE FROM chat_history');
+        await this.db.execute('DELETE FROM chat_conversations');
+        await this.db.execute('DELETE FROM assignments');
+        await this.db.execute('DELETE FROM courses');
+        await this.db.execute('DELETE FROM teachers');
+        await this.db.execute('DELETE FROM weighting_settings');
+        await this.db.execute('DELETE FROM app_settings WHERE key != "settings_initialized"');
+      } else {
+        // Fallback: delete assignments, courses, teachers via available IPC methods
+        const assignments = await this.dbCall<any[]>('getAllAssignments') || [];
+        for (const a of assignments) {
+          await this.dbCall('deleteAssignment', a.id);
+        }
+        const courses = await this.dbCall<any[]>('getAllCourses') || [];
+        for (const c of courses) {
+          await this.dbCall('deleteCourse', c.id);
+        }
+        const teachers = await this.dbCall<any[]>('getAllTeachers') || [];
+        for (const t of teachers) {
+          await this.dbCall('deleteTeacher', t.id);
+        }
+        // Settings: minimal cleanup
+        const settings = await this.dbCall<Record<string, string>>('getAllSettings') || {};
+        for (const key of Object.keys(settings)) {
+          if (key !== 'settings_initialized') {
+            await this.dbCall('setSetting', key, '');
+          }
+        }
+      }
       console.log('All data cleared from database');
     } catch (error) {
       throw new Error(`Fehler beim Löschen der Daten: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
@@ -317,13 +355,19 @@ export class BackupService {
     chatConversations: number;
     settings: number;
   }> {
+    const teachers = await this.dbCall<any[]>('getAllTeachers') || [];
+    const courses = await this.dbCall<any[]>('getAllCourses') || [];
+    const assignments = await this.dbCall<any[]>('getAllAssignments') || [];
+    const weightingPresets = await this.dbCall<any[]>('getWeightingPresets') || [];
+    const chatConversations = await this.dbCall<any[]>('getAllChatConversations') || [];
+    const settings = await this.dbCall<Record<string, string>>('getAllSettings') || {};
     return {
-      teachers: this.databaseService.getAllTeachers().length,
-      courses: this.databaseService.getAllCourses().length,
-      assignments: this.databaseService.getAllAssignments().length,
-      weightingPresets: this.databaseService.getWeightingPresets().length,
-      chatConversations: this.databaseService.getAllChatConversations().length,
-      settings: Object.keys(this.databaseService.getAllSettings()).length
+      teachers: teachers.length,
+      courses: courses.length,
+      assignments: assignments.length,
+      weightingPresets: weightingPresets.length,
+      chatConversations: chatConversations.length,
+      settings: Object.keys(settings).length
     };
   }
 
@@ -364,5 +408,14 @@ export class BackupService {
       isValid: errors.length === 0,
       errors
     };
+  }
+  // Helper that supports sync or async DB backends (main vs renderer IPC)
+  private async dbCall<T = any>(method: string, ...args: any[]): Promise<T | null> {
+    if (!this.db || typeof this.db[method] !== 'function') return null;
+    const result = this.db[method](...args);
+    if (result && typeof (result as any).then === 'function') {
+      return await result;
+    }
+    return result as T;
   }
 }

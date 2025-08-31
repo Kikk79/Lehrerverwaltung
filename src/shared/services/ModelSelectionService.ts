@@ -1,5 +1,17 @@
 import { AnthropicModel, AnthropicConfig } from '../types';
-import { DatabaseService } from './DatabaseService';
+
+// Avoid bundling better-sqlite3 into the renderer; only load DatabaseService in non-renderer contexts
+const isRenderer = typeof process !== 'undefined' && (process as any)?.type === 'renderer';
+let FallbackDatabaseService: any = null;
+if (!isRenderer) {
+  try {
+    // eslint-disable-next-line no-eval
+    const nodeRequire = eval('require');
+    FallbackDatabaseService = nodeRequire('./DatabaseService').DatabaseService;
+  } catch {
+    FallbackDatabaseService = null;
+  }
+}
 
 /**
  * Service for managing AI model selection and configuration
@@ -106,12 +118,14 @@ export class ModelSelectionService {
    */
   public async getCurrentModelConfig(): Promise<AnthropicModel> {
     try {
-      const db = DatabaseService.getInstance();
-      const modelSetting = await db.getSetting('ai_model');
+      const db = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+        ? (window as any).electronAPI.database
+        : (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+      const modelSetting = await db?.getSetting('ai_model');
       const modelId = modelSetting as AnthropicModel;
       
       // Validate model exists
-      if (this.availableModels.some(m => m.id === modelId)) {
+      if (modelId && this.availableModels.some(m => m.id === modelId)) {
         return modelId;
       }
       
@@ -133,8 +147,10 @@ export class ModelSelectionService {
         throw new Error(`Invalid model ID: ${modelId}`);
       }
 
-      const db = DatabaseService.getInstance();
-      await db.setSetting('ai_model', modelId);
+      const db = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+        ? (window as any).electronAPI.database
+        : (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+      await db?.setSetting('ai_model', modelId);
       return true;
     } catch (error) {
       console.error('Failed to update model selection:', error);
@@ -230,8 +246,10 @@ export class ModelSelectionService {
       }
 
       // Test if API key is available
-      const db = DatabaseService.getInstance();
-      const apiKey = await db.getSetting('ai_api_key');
+      const db = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+        ? (window as any).electronAPI.database
+        : (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+      const apiKey = await db?.getSetting('ai_api_key');
       if (!apiKey) {
         return {
           isValid: false,

@@ -242,11 +242,32 @@ export class MainFileOperationsHandler {
   public async initializeServices(): Promise<void> {
     try {
       // Initialize AI service if not already initialized
-      const apiKey = this.dbService.getSetting('anthropic_api_key');
+      const envKey = process.env.ANTHROPIC_API_KEY?.trim();
+
+      // Fallback to DB-stored key (supports both anthropic_api_key and ai_api_key)
+      let storedKey = this.dbService.getSetting('anthropic_api_key') || this.dbService.getSetting('ai_api_key');
+      // SettingsService stores base64 to avoid plaintext; decode if it looks like base64
+      let decodedKey: string | null = null;
+      if (storedKey) {
+        try {
+          const maybe = Buffer.from(storedKey, 'base64').toString('utf8');
+          // Heuristic: Anthropic keys start with "sk-ant-"; if decode yields that, use it
+          decodedKey = maybe.startsWith('sk-ant-') ? maybe : storedKey;
+        } catch {
+          decodedKey = storedKey;
+        }
+      }
+
+      const apiKey = envKey || decodedKey || null;
+
       if (apiKey && !this.aiService.getConfig()) {
+        // Respect user-selected model; fall back to Sonnet if none
+        const selectedModelRaw = this.dbService.getSetting('selected_ai_model') || 'claude-sonnet-4-20250514';
+        const allowed: any = ['claude-haiku-3.5-20241022','claude-sonnet-4-20250514','claude-opus-4-20241022'];
+        const selectedModel = (allowed.includes(selectedModelRaw) ? selectedModelRaw : 'claude-sonnet-4-20250514') as any;
         await this.aiService.initialize({
           apiKey,
-          model: 'claude-haiku-3.5-20241022',
+          model: selectedModel,
           maxTokens: 1000,
           temperature: 0.1,
           systemPrompt: 'You are a helpful CSV interpretation assistant.'

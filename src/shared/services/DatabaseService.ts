@@ -448,6 +448,12 @@ export class DatabaseService {
     const stmt = this.db.prepare(`
       INSERT INTO weighting_settings (profile_name, equality_weight, continuity_weight, loyalty_weight, is_default)
       VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(profile_name) DO UPDATE SET
+        equality_weight = excluded.equality_weight,
+        continuity_weight = excluded.continuity_weight,
+        loyalty_weight   = excluded.loyalty_weight,
+        is_default       = excluded.is_default,
+        updated_at       = CURRENT_TIMESTAMP
     `);
     
     const result = stmt.run(
@@ -457,6 +463,12 @@ export class DatabaseService {
       settings.loyalty_weight,
       settings.is_default ? 1 : 0
     );
+
+    // If updated instead of inserted, fetch by name
+    if (!result.lastInsertRowid) {
+      const row = this.db.prepare('SELECT id FROM weighting_settings WHERE profile_name = ?').get(settings.profile_name) as any;
+      return this.getWeightingSettings(row.id)!;
+    }
 
     return this.getWeightingSettings(result.lastInsertRowid as number)!;
   }

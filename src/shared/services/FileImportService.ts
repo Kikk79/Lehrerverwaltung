@@ -100,12 +100,16 @@ export class FileImportService {
       }
 
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      const delimiter = options.delimiter || this.detectDelimiter(fileContent);
+      // Let Papa parse auto-detect common delimiters; still pass a hint based on detection
+      const delimiterHint = options.delimiter || this.detectDelimiter(fileContent);
       
       const parseResult = Papa.parse(fileContent, {
-        delimiter,
+        delimiter: delimiterHint,
+        delimitersToGuess: [',', ';', '\t', '|'],
+        quoteChar: '"',
+        escapeChar: '"',
         header: false,
-        skipEmptyLines: true,
+        skipEmptyLines: 'greedy',
         transformHeader: (header: string) => header.trim(),
         transform: (value: string) => value.trim()
       });
@@ -214,9 +218,12 @@ export class FileImportService {
       const fileContent = fs.readFileSync(options.file_path, 'utf8');
       
       const parseResult = Papa.parse(fileContent, {
-        delimiter: options.delimiter,
+        delimiter: options.delimiter || this.detectDelimiter(fileContent),
+        delimitersToGuess: [',', ';', '\t', '|'],
+        quoteChar: '"',
+        escapeChar: '"',
         header: false,
-        skipEmptyLines: true,
+        skipEmptyLines: 'greedy',
         transformHeader: (header: string) => header.trim(),
         transform: (value: string) => value.trim()
       });

@@ -12,7 +12,6 @@ import {
   Course 
 } from '../../../shared/types';
 import { CalendarService, CalendarViewType, CalendarPreferences } from '../../../shared/services/CalendarService';
-import { DatabaseService } from '../../../shared/services/DatabaseService';
 import CalendarToolbar from './CalendarToolbar';
 import CalendarFilters from './CalendarFilters';
 import EventDetailsModal from './EventDetailsModal';
@@ -30,14 +29,15 @@ interface CalendarViewProps {
 const CalendarView: React.FC<CalendarViewProps> = ({ className = '' }) => {
   // Services
   const calendarService = new CalendarService();
-  const dbService = DatabaseService.getInstance();
+  // Use IPC-backed database API exposed by preload instead of importing better-sqlite3 into the renderer
+  const electronAPI = (window as any).electronAPI;
   
   // Calendar state
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [currentView, setCurrentView] = useState<CalendarViewType>('timeGridWeek');
   const [preferences, setPreferences] = useState<CalendarPreferences>(
-    calendarService.getCalendarPreferences()
+    calendarService.getDefaultPreferences()
   );
   
   // UI state
@@ -59,6 +59,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ className = '' }) => {
    * Load all calendar data on component mount
    */
   useEffect(() => {
+    // Load preferences from DB via IPC
+    (async () => {
+      const prefs = await calendarService.getCalendarPreferencesAsync();
+      setPreferences(prefs);
+    })();
     loadCalendarData();
   }, []);
 
@@ -78,10 +83,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ className = '' }) => {
       setLoading(true);
       setError(null);
 
-      // Load base data
-      const allTeachers = dbService.getAllTeachers();
-      const allCourses = dbService.getAllCourses();
-      const activeAssignments = dbService.getAllAssignments().filter(a => a.status === 'active');
+      // Load base data via IPC (renderer -> main)
+      const allTeachers: Teacher[] = await electronAPI.database.getAllTeachers();
+      const allCourses: Course[] = await electronAPI.database.getAllCourses();
+      const allAssignments: Assignment[] = await electronAPI.database.getAllAssignments();
+      const activeAssignments = allAssignments.filter(a => a.status === 'active');
 
       setTeachers(allTeachers);
       setCourses(allCourses);
@@ -101,12 +107,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({ className = '' }) => {
     } finally {
       setLoading(false);
     }
-  }, [dbService, calendarService]);
+  }, [calendarService, electronAPI]);
 
   /**
    * Handle calendar view change
    */
-  const handleViewChange = useCallback((newView: CalendarViewType) => {
+  const handleViewChange = useCallback(async (newView: CalendarViewType) => {
     setCurrentView(newView);
     
     // Update calendar view
@@ -118,7 +124,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ className = '' }) => {
     // Save preference
     const updatedPrefs = { ...preferences, defaultView: newView };
     setPreferences(updatedPrefs);
-    calendarService.saveCalendarPreferences(updatedPrefs);
+    await calendarService.saveCalendarPreferences(updatedPrefs);
   }, [preferences, calendarService]);
 
   /**

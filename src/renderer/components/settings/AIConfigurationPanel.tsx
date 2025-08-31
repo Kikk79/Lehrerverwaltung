@@ -15,7 +15,9 @@ interface ModelInfo {
 const AIConfigurationPanel: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string>('');
+  const [hasStoredApiKey, setHasStoredApiKey] = useState<boolean>(false);
   const [availableModels, setAvailableModels] = useState<ModelInfo[]>([]);
+  const [hasEnvApiKey, setHasEnvApiKey] = useState<boolean>(false);
   const [systemPrompts, setSystemPrompts] = useState<any[]>([]);
   const [selectedPromptType, setSelectedPromptType] = useState<string>('assignment_optimization');
   const [customPrompt, setCustomPrompt] = useState<string>('');
@@ -36,9 +38,18 @@ const AIConfigurationPanel: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Load API key (show masked version)
+      // Check for environment-provided key (do not expose the raw value)
+      const envHas = await (window as any).electronAPI?.env?.has('ANTHROPIC_API_KEY');
+      setHasEnvApiKey(!!envHas);
+      const envMasked = envHas ? await (window as any).electronAPI.env.getMasked('ANTHROPIC_API_KEY') : '';
+
+      // Load API key from DB (masked)
       const savedApiKey = await settingsService.getApiKey();
-      setApiKey(savedApiKey ? '••••••••••••••••••••' + savedApiKey.slice(-4) : '');
+      setHasStoredApiKey(!!savedApiKey);
+      const maskedDbKey = savedApiKey ? '••••••••••••••••••••' + (savedApiKey?.slice(-4) ?? '') : '';
+
+      // Prefer env indicator for UI if present; otherwise show DB masked key
+      setApiKey(envHas ? envMasked : maskedDbKey);
       
       // Load selected model
       const model = await settingsService.getSelectedModel();
@@ -208,7 +219,8 @@ const AIConfigurationPanel: React.FC = () => {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="sk-ant-api03-..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={hasEnvApiKey}
+                className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${hasEnvApiKey ? 'bg-gray-50 text-gray-500 border-gray-200' : 'border-gray-300'}`}
               />
               <button
                 onClick={handleSaveApiKey}
@@ -219,7 +231,9 @@ const AIConfigurationPanel: React.FC = () => {
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Ihr API-Schlüssel wird verschlüsselt lokal gespeichert
+              {hasEnvApiKey
+                ? 'Die Umgebungsvariable ANTHROPIC_API_KEY ist gesetzt und wird verwendet. Eingaben hier sind deaktiviert.'
+                : 'Ihr API-Schlüssel wird verschlüsselt lokal gespeichert'}
             </p>
           </div>
 
@@ -232,7 +246,7 @@ const AIConfigurationPanel: React.FC = () => {
             </div>
             <button
               onClick={handleTestConnection}
-              disabled={connectionStatus === 'testing' || !apiKey || apiKey.includes('••••')}
+              disabled={connectionStatus === 'testing'}
               className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400"
             >
               {connectionStatus === 'testing' ? 'Teste...' : 'Verbindung testen'}

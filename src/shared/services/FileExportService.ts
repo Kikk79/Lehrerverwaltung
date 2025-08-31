@@ -297,7 +297,7 @@ export class FileExportService {
 
       // Generate CSV content
       const csv = Papa.unparse(data, {
-        delimiter: ';',
+        delimiter: ',', // RFC-4180 default; importer auto-detects other delimiters
         header: true,
         quotes: true
       });

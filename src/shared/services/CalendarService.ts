@@ -7,8 +7,20 @@ import {
   TimeSlot,
   Conflict 
 } from '../types';
-import { DatabaseService } from './DatabaseService';
 import { AssignmentService } from './AssignmentService';
+
+// Avoid bundling better-sqlite3 into the renderer: only load DatabaseService in non-renderer contexts
+const isRenderer = typeof process !== 'undefined' && (process as any)?.type === 'renderer';
+let FallbackDatabaseService: any = null;
+if (!isRenderer) {
+  try {
+    // eslint-disable-next-line no-eval
+    const nodeRequire = eval('require');
+    FallbackDatabaseService = nodeRequire('./DatabaseService').DatabaseService;
+  } catch {
+    FallbackDatabaseService = null;
+  }
+}
 
 /**
  * Calendar view types supported by the calendar component
@@ -54,13 +66,17 @@ export interface EventDropResult {
  * Handles event creation, filtering, drag-drop operations, and data sync
  */
 export class CalendarService {
-  private dbService: DatabaseService;
+  private db: any;
   private assignmentService: AssignmentService;
   private defaultPreferences: CalendarPreferences;
+  private readonly isRenderer: boolean = isRenderer;
 
-  constructor(dbService?: DatabaseService, assignmentService?: AssignmentService) {
-    this.dbService = dbService || DatabaseService.getInstance();
-    this.assignmentService = assignmentService || new AssignmentService(this.dbService);
+  constructor(dbInstance?: any, assignmentService?: AssignmentService) {
+    const maybeElectronDB = (typeof window !== 'undefined' && (window as any)?.electronAPI?.database)
+      ? (window as any).electronAPI.database
+      : null;
+    this.db = dbInstance || maybeElectronDB || (FallbackDatabaseService ? FallbackDatabaseService.getInstance() : null);
+    this.assignmentService = assignmentService || new AssignmentService(this.db);
     
     // Default calendar preferences with Outlook-like styling
     this.defaultPreferences = {
@@ -95,14 +111,8 @@ export class CalendarService {
     const teacherMap = new Map(teachers?.map(t => [t.id, t]) || []);
     const courseMap = new Map(courses?.map(c => [c.id, c]) || []);
 
-    // If not provided, fetch from database
-    if (!teachers || !courses) {
-      const allTeachers = this.dbService.getAllTeachers();
-      const allCourses = this.dbService.getAllCourses();
-      
-      allTeachers.forEach(t => teacherMap.set(t.id, t));
-      allCourses.forEach(c => courseMap.set(c.id, c));
-    }
+    // In renderer, we expect teachers and courses to be provided by the caller (via IPC)
+    // In main, callers may omit them and handle differently if needed, but we avoid DB calls here to keep this pure.
 
     const events: CalendarEvent[] = [];
 
@@ -166,14 +176,7 @@ export class CalendarService {
         }
       }
 
-      // Filter by assignment status
-      if (filterOptions.status && filterOptions.status.length > 0) {
-        const assignment = this.dbService.getAssignment(event.assignmentId);
-        if (!assignment || !filterOptions.status.includes(assignment.status)) {
-          return false;
-        }
-      }
-
+      // Note: status filtering is handled at data-load time in the renderer (we fetch only matching assignments)
       return true;
     });
   }
@@ -195,7 +198,7 @@ export class CalendarService {
       const [assignmentIdStr, originalDate, originalTime] = eventId.split('-');
       const assignmentId = parseInt(assignmentIdStr);
       
-      const assignment = this.dbService.getAssignment(assignmentId);
+      const assignment = await this.dbCall<Assignment | null>('getAssignment', assignmentId);
       if (!assignment) {
         return {
           success: false,
@@ -203,8 +206,8 @@ export class CalendarService {
         };
       }
 
-      const teacher = this.dbService.getTeacher(assignment.teacher_id);
-      const course = this.dbService.getCourse(assignment.course_id);
+      const teacher = await this.dbCall<Teacher | null>('getTeacher', assignment.teacher_id);
+      const course = await this.dbCall<Course | null>('getCourse', assignment.course_id);
       
       if (!teacher || !course) {
         return {
@@ -222,7 +225,8 @@ export class CalendarService {
       };
 
       // Validate the new time slot
-      const conflicts = this.validateTimeSlotMove(teacher, assignment, originalDate, originalTime, newSlot);
+      const allAssignments = await this.dbCall<Assignment[]>('getAllAssignments');
+      const conflicts = this.validateTimeSlotMove(teacher, assignment, originalDate, originalTime, newSlot, allAssignments || []);
       
       if (conflicts.length > 0 && conflicts.some(c => c.severity === 'critical')) {
         return {
@@ -246,8 +250,8 @@ export class CalendarService {
         ai_rationale: `${assignment.ai_rationale || ''} [Calendar: Rescheduled from ${originalDate} ${originalTime} to ${newSlot.date} ${newSlot.start_time}]`
       };
 
-      // Save to database
-      this.dbService.updateAssignment(updatedAssignment.id, {
+      // Save to database (supports sync or async DB backends)
+      await this.dbCall('updateAssignment', updatedAssignment.id, {
         scheduled_slots: updatedSlots,
         ai_rationale: updatedAssignment.ai_rationale
       });
@@ -276,7 +280,8 @@ export class CalendarService {
     assignment: Assignment,
     originalDate: string,
     originalTime: string,
-    newSlot: TimeSlot
+    newSlot: TimeSlot,
+    allAssignments: Assignment[]
   ): Conflict[] {
     const conflicts: Conflict[] = [];
 
@@ -291,10 +296,10 @@ export class CalendarService {
     }
 
     // Check for time overlaps with other assignments
-    const allAssignments = this.dbService.getAllAssignments()
+    const relevantAssignments = (allAssignments || [])
       .filter(a => a.id !== assignment.id && a.teacher_id === teacher.id && a.status === 'active');
     
-    allAssignments.forEach(otherAssignment => {
+    relevantAssignments.forEach(otherAssignment => {
       otherAssignment.scheduled_slots.forEach(slot => {
         if (this.timeSlotsOverlap(newSlot, slot)) {
           conflicts.push({
@@ -327,28 +332,30 @@ export class CalendarService {
   /**
    * Get calendar preferences from database or return defaults
    */
-  public getCalendarPreferences(): CalendarPreferences {
+  public getDefaultPreferences(): CalendarPreferences {
+    return this.defaultPreferences;
+  }
+
+  public async getCalendarPreferencesAsync(): Promise<CalendarPreferences> {
     try {
-      const savedPrefs = this.dbService.getSetting('calendar_preferences');
+      const savedPrefs = await this.dbCall<string | null>('getSetting', 'calendar_preferences');
       if (savedPrefs) {
         return { ...this.defaultPreferences, ...JSON.parse(savedPrefs) };
       }
     } catch (error) {
       console.warn('Error loading calendar preferences, using defaults:', error);
     }
-    
     return this.defaultPreferences;
   }
 
   /**
    * Save calendar preferences to database
    */
-  public saveCalendarPreferences(preferences: Partial<CalendarPreferences>): void {
+  public async saveCalendarPreferences(preferences: Partial<CalendarPreferences>): Promise<void> {
     try {
-      const currentPrefs = this.getCalendarPreferences();
+      const currentPrefs = await this.getCalendarPreferencesAsync();
       const updatedPrefs = { ...currentPrefs, ...preferences };
-      
-      this.dbService.setSetting('calendar_preferences', JSON.stringify(updatedPrefs));
+      await this.dbCall('setSetting', 'calendar_preferences', JSON.stringify(updatedPrefs));
     } catch (error) {
       console.error('Error saving calendar preferences:', error);
       throw error;
@@ -379,9 +386,12 @@ export class CalendarService {
    * Create event tooltip content
    */
   public createEventTooltip(event: CalendarEvent): string {
-    const teacher = this.dbService.getTeacher(event.teacherId);
-    const course = this.dbService.getCourse(event.courseId);
-    const assignment = this.dbService.getAssignment(event.assignmentId);
+    if (this.isRenderer) {
+      return 'German: Ereignisdetails nicht verfügbar';
+    }
+    const teacher = this.db?.getTeacher?.(event.teacherId);
+    const course = this.db?.getCourse?.(event.courseId);
+    const assignment = this.db?.getAssignment?.(event.assignmentId);
 
     if (!teacher || !course || !assignment) {
       return 'German: Ereignisdetails nicht verfügbar';
@@ -406,9 +416,13 @@ export class CalendarService {
    * Get all calendar events for current assignments
    */
   public getAllCalendarEvents(): CalendarEvent[] {
-    const assignments = this.dbService.getAllAssignments().filter(a => a.status === 'active');
-    const teachers = this.dbService.getAllTeachers();
-    const courses = this.dbService.getAllCourses();
+    if (this.isRenderer) {
+      // Not supported in renderer without IPC context
+      return [];
+    }
+    const assignments = this.db.getAllAssignments().filter((a: Assignment) => a.status === 'active');
+    const teachers = this.db.getAllTeachers();
+    const courses = this.db.getAllCourses();
     
     return this.convertAssignmentsToCalendarEvents(assignments, teachers, courses);
   }
@@ -470,5 +484,19 @@ export class CalendarService {
       'cancelled': 'Abgebrochen'
     };
     return translations[status] || status;
+  }
+
+  // Helper that supports sync or async DB backends (main vs renderer IPC)
+  private async dbCall<T = any>(method: string, ...args: any[]): Promise<T | null> {
+    if (!this.db || typeof this.db[method] !== 'function') return null;
+    try {
+      const result = this.db[method](...args);
+      if (result && typeof (result as any).then === 'function') {
+        return await result;
+      }
+      return result as T;
+    } catch (err) {
+      throw err;
+    }
   }
 }

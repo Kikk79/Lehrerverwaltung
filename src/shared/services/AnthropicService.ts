@@ -46,12 +46,12 @@ export class AnthropicService {
    * Test the API connection with a simple request
    */
   private async testConnection(): Promise<void> {
-    if (!this.client) {
+    if (!this.client || !this.config) {
       throw new Error('Client not initialized');
     }
 
     await this.client.messages.create({
-      model: 'claude-haiku-3.5-20241022',
+      model: this.config.model,
       max_tokens: 10,
       messages: [{ role: 'user', content: 'Test connection' }],
     });

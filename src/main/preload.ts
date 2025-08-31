@@ -51,7 +51,16 @@ const electronAPI = {
     getAllSettings: () => ipcRenderer.invoke('db:getAllSettings'),
 
     // Utility operations
-    getStats: () => ipcRenderer.invoke('db:getStats')
+    getStats: () => ipcRenderer.invoke('db:getStats'),
+
+    // Weighting settings
+    getWeightingPresets: () => ipcRenderer.invoke('db:getWeightingPresets'),
+    saveWeightingPreset: (preset: any) => ipcRenderer.invoke('db:saveWeightingPreset', preset),
+    deleteWeightingPreset: (id: number) => ipcRenderer.invoke('db:deleteWeightingPreset', id),
+    getDefaultWeightingSettings: () => ipcRenderer.invoke('db:getDefaultWeightingSettings'),
+    getAllWeightingSettings: () => ipcRenderer.invoke('db:getAllWeightingSettings'),
+    updateWeightingSettings: (id: number, updates: any) => ipcRenderer.invoke('db:updateWeightingSettings', id, updates),
+    setDefaultWeightingPreset: (id: number) => ipcRenderer.invoke('db:setDefaultWeightingPreset', id)
   },
 
   // File Import operations
@@ -110,6 +119,17 @@ const electronAPI = {
   // File Operations utilities
   fileOperations: {
     getStats: () => ipcRenderer.invoke('fileOperations:getStats')
+  },
+
+  // Environment helpers (non-secret)
+  env: {
+    has: (name: string) => ipcRenderer.invoke('env:has', name),
+    getMasked: (name: string) => ipcRenderer.invoke('env:getMasked', name)
+  },
+
+  // AI operations
+  ai: {
+    testConnection: () => ipcRenderer.invoke('ai:testConnection')
   },
 
   // Assignment operations

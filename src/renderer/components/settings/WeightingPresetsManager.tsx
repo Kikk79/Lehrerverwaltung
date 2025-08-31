@@ -116,6 +116,11 @@ const WeightingPresetsManager: React.FC = () => {
       return;
     }
 
+    if (!preset.id) {
+      setError('Dieses Preset hat keine ID und kann nicht gelöscht werden (evtl. nicht gespeichert).');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -134,6 +139,11 @@ const WeightingPresetsManager: React.FC = () => {
   };
 
   const handleSetDefault = async (preset: WeightingSettings) => {
+    if (!preset.id) {
+      setError('Dieses Preset hat keine ID und kann nicht als Standard gesetzt werden (evtl. nicht gespeichert).');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -282,7 +292,11 @@ const WeightingPresetsManager: React.FC = () => {
                   </div>
 
                   <div className="text-xs text-gray-500">
-                    Erstellt am: {new Date(preset.created_at).toLocaleDateString('de-DE')}
+                    {preset.created_at ? (
+                      <>Erstellt am: {new Date(preset.created_at).toLocaleDateString('de-DE')}</>
+                    ) : (
+                      <>Erstellt am: —</>
+                    )}
                   </div>
                 </div>
 

@@ -1,6 +1,8 @@
 import { DatabaseService } from '../shared/services/DatabaseService';
 import { AssignmentService, AssignmentWeights } from '../shared/services/AssignmentService';
-import { ipcMain } from 'electron';
+import { app, ipcMain } from 'electron';
+import path from 'path';
+import fs from 'fs';
 import { Teacher, Course, Assignment, AssignmentConstraints } from '../shared/types';
 
 /**
@@ -12,7 +14,35 @@ export class MainDatabaseHandler {
   private assignmentService: AssignmentService;
 
   constructor() {
-    this.dbService = DatabaseService.getInstance();
+    const userDataDir = path.join(app.getPath('userData'), 'database');
+    const dbPath = path.join(userDataDir, 'teacher-assignment.db');
+
+    // Attempt one-time migration from legacy repo path to userData path
+    try {
+      const legacyDir = path.join(process.cwd(), 'database');
+      const legacyDb = path.join(legacyDir, 'teacher-assignment.db');
+      if (!fs.existsSync(userDataDir)) {
+        fs.mkdirSync(userDataDir, { recursive: true });
+      }
+      if (!fs.existsSync(dbPath) && fs.existsSync(legacyDb)) {
+        fs.copyFileSync(legacyDb, dbPath);
+        const legacyWal = legacyDb + '-wal';
+        const legacyShm = legacyDb + '-shm';
+        if (fs.existsSync(legacyWal)) {
+          const walTarget = path.join(userDataDir, 'teacher-assignment.db-wal');
+          fs.copyFileSync(legacyWal, walTarget);
+        }
+        if (fs.existsSync(legacyShm)) {
+          const shmTarget = path.join(userDataDir, 'teacher-assignment.db-shm');
+          fs.copyFileSync(legacyShm, shmTarget);
+        }
+        console.log('[main] Migrated database to userData path:', dbPath);
+      }
+    } catch (err) {
+      console.warn('[main] Database migration skipped or failed:', err);
+    }
+
+    this.dbService = DatabaseService.getInstance(dbPath);
     this.assignmentService = new AssignmentService(this.dbService);
     this.setupIpcHandlers();
   }
@@ -100,6 +130,35 @@ export class MainDatabaseHandler {
     // Utility operations
     ipcMain.handle('db:getStats', async () => {
       return this.dbService.getStats();
+    });
+
+    // Weighting settings operations (exposed for renderer)
+    ipcMain.handle('db:getWeightingPresets', async () => {
+      return this.dbService.getWeightingPresets();
+    });
+
+    ipcMain.handle('db:saveWeightingPreset', async (_evt, preset) => {
+      return this.dbService.saveWeightingPreset(preset);
+    });
+
+    ipcMain.handle('db:deleteWeightingPreset', async (_evt, id: number) => {
+      return this.dbService.deleteWeightingPreset(id);
+    });
+
+    ipcMain.handle('db:getDefaultWeightingSettings', async () => {
+      return this.dbService.getDefaultWeightingSettings();
+    });
+
+    ipcMain.handle('db:getAllWeightingSettings', async () => {
+      return this.dbService.getAllWeightingSettings();
+    });
+
+    ipcMain.handle('db:updateWeightingSettings', async (_evt, id: number, updates) => {
+      return this.dbService.updateWeightingSettings(id, updates);
+    });
+
+    ipcMain.handle('db:setDefaultWeightingPreset', async (_evt, id: number) => {
+      return this.dbService.setDefaultWeightingPreset(id);
     });
 
     // Assignment generation operations

@@ -1,0 +1,3 @@
+"type";"id";"name";"qualifications";"working_times";"created_at"
+"Teacher";"2";"Markus";"word";"{""monday"":{""start"":""09:00"",""end"":""17:00""},""tuesday"":{""start"":""09:00"",""end"":""17:00""},""wednesday"":{""start"":""09:00"",""end"":""17:00""},""thursday"":{""start"":""09:00"",""end"":""17:00""},""friday"":{""start"":""09:00"",""end"":""17:00""},""saturday"":{""start"":""09:00"",""end"":""17:00""}}";"2025-08-31 02:40:00"
+"Course";"2";;;;"2025-08-31 02:40:25"

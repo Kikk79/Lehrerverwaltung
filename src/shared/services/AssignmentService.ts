@@ -11,7 +11,19 @@ import {
   TimeRange,
   AssignmentConstraints
 } from '../types';
-import { DatabaseService } from './DatabaseService';
+
+// Avoid bundling better-sqlite3 into the renderer; only load DatabaseService in non-renderer contexts
+const isRenderer = typeof process !== 'undefined' && (process as any)?.type === 'renderer';
+let FallbackDatabaseService: any = null;
+if (!isRenderer) {
+  try {
+    // eslint-disable-next-line no-eval
+    const nodeRequire = eval('require');
+    FallbackDatabaseService = nodeRequire('./DatabaseService').DatabaseService;
+  } catch {
+    FallbackDatabaseService = null;
+  }
+}
 
 /**
  * Weighting factors for assignment optimization
@@ -46,10 +58,18 @@ interface TeacherWorkload {
  * Handles teacher-course assignment optimization using multiple algorithms
  */
 export class AssignmentService {
-  private dbService: DatabaseService;
+  private dbService: any;
   
-  constructor(dbService?: DatabaseService) {
-    this.dbService = dbService || DatabaseService.getInstance();
+  constructor(dbService?: any) {
+    if (dbService) {
+      this.dbService = dbService;
+    } else if (!isRenderer && FallbackDatabaseService) {
+      this.dbService = FallbackDatabaseService.getInstance();
+    } else if (typeof window !== 'undefined' && (window as any)?.electronAPI?.database) {
+      this.dbService = (window as any).electronAPI.database;
+    } else {
+      this.dbService = null;
+    }
   }
 
   // ALGO-001: Basic qualification-matching algorithm (exact match only)
@@ -271,11 +291,10 @@ export class AssignmentService {
    */
   private calculateWorkloadPenalty(teacher: Teacher, course: Course, equalityWeight: number): number {
     // Get current workload for this teacher
-    const currentAssignments = this.dbService.getAllAssignments()
-      .filter(a => a.teacher_id === teacher.id && a.status === 'active');
+    const currentAssignments = this.dbService ? this.dbService.getAllAssignments().filter((a: Assignment) => a.teacher_id === teacher.id && a.status === 'active') : [];
     
-    const currentWorkload = currentAssignments.reduce((total, assignment) => {
-      return total + assignment.scheduled_slots.reduce((slotTotal, slot) => slotTotal + slot.duration_minutes, 0);
+const currentWorkload = (currentAssignments as Assignment[]).reduce((total: number, assignment: Assignment) => {
+      return total + assignment.scheduled_slots.reduce((slotTotal: number, slot: TimeSlot) => slotTotal + slot.duration_minutes, 0);
     }, 0);
     
     // Calculate penalty based on how much this assignment would increase workload imbalance
@@ -291,13 +310,12 @@ export class AssignmentService {
    */
   private calculateContinuityBonus(teacher: Teacher, course: Course, continuityWeight: number): number {
     // Check if teacher has consecutive courses or similar subjects
-    const teacherAssignments = this.dbService.getAllAssignments()
-      .filter(a => a.teacher_id === teacher.id && a.status === 'active');
+    const teacherAssignments = this.dbService ? this.dbService.getAllAssignments().filter((a: Assignment) => a.teacher_id === teacher.id && a.status === 'active') : [];
     
     let continuityScore = 0;
     
     // Bonus for teaching similar subjects (exact qualification match)
-    teacherAssignments.forEach(assignment => {
+(teacherAssignments as Assignment[]).forEach((assignment: Assignment) => {
       const assignmentCourse = this.dbService.getCourse(assignment.course_id);
       if (assignmentCourse && assignmentCourse.topic === course.topic) {
         continuityScore += 10; // Bonus for same subject
@@ -312,12 +330,11 @@ export class AssignmentService {
    */
   private calculateLoyaltyBonus(teacher: Teacher, course: Course, loyaltyWeight: number): number {
     // Check if teacher has previously taught this course or similar courses
-    const historicalAssignments = this.dbService.getAllAssignments()
-      .filter(a => a.teacher_id === teacher.id);
+    const historicalAssignments = this.dbService ? this.dbService.getAllAssignments().filter((a: Assignment) => a.teacher_id === teacher.id) : [];
     
     let loyaltyScore = 0;
     
-    historicalAssignments.forEach(assignment => {
+(historicalAssignments as Assignment[]).forEach((assignment: Assignment) => {
       const assignmentCourse = this.dbService.getCourse(assignment.course_id);
       if (assignmentCourse && assignmentCourse.topic === course.topic) {
         loyaltyScore += 15; // Bonus for previous experience with same subject
@@ -331,13 +348,13 @@ export class AssignmentService {
    * Calculate average workload across all teachers
    */
   private calculateAverageWorkload(): number {
-    const teachers = this.dbService.getAllTeachers();
-    const assignments = this.dbService.getAllAssignments().filter(a => a.status === 'active');
+    const teachers = this.dbService ? this.dbService.getAllTeachers() : [];
+    const assignments = this.dbService ? this.dbService.getAllAssignments().filter((a: Assignment) => a.status === 'active') : [];
     
     if (teachers.length === 0) return 0;
     
-    const totalWorkload = assignments.reduce((total, assignment) => {
-      return total + assignment.scheduled_slots.reduce((slotTotal, slot) => slotTotal + slot.duration_minutes, 0);
+const totalWorkload = (assignments as Assignment[]).reduce((total: number, assignment: Assignment) => {
+      return total + assignment.scheduled_slots.reduce((slotTotal: number, slot: TimeSlot) => slotTotal + slot.duration_minutes, 0);
     }, 0);
     
     return totalWorkload / teachers.length;
@@ -385,10 +402,9 @@ export class AssignmentService {
     let score = 50; // Base score
     
     // Bonus for teaching same subject
-    const teacherAssignments = this.dbService.getAllAssignments()
-      .filter(a => a.teacher_id === teacher.id && a.status === 'active');
+const teacherAssignments = this.dbService ? this.dbService.getAllAssignments().filter((a: Assignment) => a.teacher_id === teacher.id && a.status === 'active') : [];
     
-    teacherAssignments.forEach(assignment => {
+    (teacherAssignments as Assignment[]).forEach((assignment: Assignment) => {
       const assignmentCourse = this.dbService.getCourse(assignment.course_id);
       if (assignmentCourse && assignmentCourse.topic === course.topic) {
         score += 25; // Bonus for continuity
@@ -405,10 +421,9 @@ export class AssignmentService {
     let score = 50; // Base score
     
     // Bonus for historical relationship with this subject
-    const allAssignments = this.dbService.getAllAssignments()
-      .filter(a => a.teacher_id === teacher.id);
+    const allAssignments = this.dbService ? this.dbService.getAllAssignments().filter((a: Assignment) => a.teacher_id === teacher.id) : [];
     
-    const subjectExperience = allAssignments.filter(assignment => {
+const subjectExperience = (allAssignments as Assignment[]).filter((assignment: Assignment) => {
       const assignmentCourse = this.dbService.getCourse(assignment.course_id);
       return assignmentCourse && assignmentCourse.topic === course.topic;
     }).length;
@@ -423,11 +438,10 @@ export class AssignmentService {
    * Get current workload for a teacher
    */
   private getCurrentTeacherWorkload(teacherId: number): number {
-    const assignments = this.dbService.getAllAssignments()
-      .filter(a => a.teacher_id === teacherId && a.status === 'active');
+    const assignments = this.dbService ? this.dbService.getAllAssignments().filter((a: Assignment) => a.teacher_id === teacherId && a.status === 'active') : [];
     
-    return assignments.reduce((total, assignment) => {
-      return total + assignment.scheduled_slots.reduce((slotTotal, slot) => slotTotal + slot.duration_minutes, 0);
+return (assignments as Assignment[]).reduce((total: number, assignment: Assignment) => {
+      return total + assignment.scheduled_slots.reduce((slotTotal: number, slot: TimeSlot) => slotTotal + slot.duration_minutes, 0);
     }, 0);
   }
 
@@ -780,18 +794,18 @@ export class AssignmentService {
    * Get detailed workload statistics for all teachers
    */
   public getWorkloadStatistics(): TeacherWorkload[] {
-    const teachers = this.dbService.getAllTeachers();
-    const assignments = this.dbService.getAllAssignments().filter(a => a.status === 'active');
+    const teachers = this.dbService ? this.dbService.getAllTeachers() : [];
+    const assignments = this.dbService ? this.dbService.getAllAssignments().filter((a: Assignment) => a.status === 'active') : [];
     
-    return teachers.map(teacher => {
-      const teacherAssignments = assignments.filter(a => a.teacher_id === teacher.id);
+return teachers.map((teacher: Teacher) => {
+      const teacherAssignments = (assignments as Assignment[]).filter((a: Assignment) => a.teacher_id === teacher.id);
       
-      const totalLessons = teacherAssignments.reduce((total, assignment) => 
+const totalLessons = (teacherAssignments as Assignment[]).reduce((total: number, assignment: Assignment) => 
         total + assignment.scheduled_slots.length, 0
       );
       
-      const totalHours = teacherAssignments.reduce((total, assignment) => 
-        total + assignment.scheduled_slots.reduce((slotTotal, slot) => 
+      const totalHours = (teacherAssignments as Assignment[]).reduce((total: number, assignment: Assignment) => 
+        total + assignment.scheduled_slots.reduce((slotTotal: number, slot: TimeSlot) => 
           slotTotal + slot.duration_minutes, 0
         ), 0
       ) / 60; // Convert to hours

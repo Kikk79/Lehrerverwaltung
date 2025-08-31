@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarEvent } from '../../../shared/types';
-import { DatabaseService } from '../../../shared/services/DatabaseService';
+import { CalendarEvent, Teacher, Course, Assignment } from '../../../shared/types';
 import { CalendarService } from '../../../shared/services/CalendarService';
 
 interface EventDetailsModalProps {
@@ -21,13 +20,38 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const dbService = DatabaseService.getInstance();
+  const [teacher, setTeacher] = useState<Teacher | null>(null);
+  const [course, setCourse] = useState<Course | null>(null);
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
   const calendarService = new CalendarService();
 
-  // Fetch detailed data
-  const teacher = dbService.getTeacher(event.teacherId);
-  const course = dbService.getCourse(event.courseId);
-  const assignment = dbService.getAssignment(event.assignmentId);
+  // Fetch detailed data via IPC (renderer -> main)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const api = (window as any).electronAPI;
+        const [t, c, a] = await Promise.all([
+          api.database.getTeacher(event.teacherId),
+          api.database.getCourse(event.courseId),
+          api.database.getAssignment(event.assignmentId)
+        ]);
+        if (!cancelled) {
+          setTeacher(t || null);
+          setCourse(c || null);
+          setAssignment(a || null);
+        }
+      } catch (err) {
+        if (!cancelled) setError(`Fehler beim Laden der Ereignisdetails: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [event]);
 
   useEffect(() => {
     // Close modal on Escape key
@@ -57,12 +81,13 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         return slotDateTime !== eventDateTime;
       });
 
+      const api = (window as any).electronAPI;
       if (updatedSlots.length === 0) {
         // If no slots remain, delete the entire assignment
-        dbService.deleteAssignment(assignment.id);
+        await api.database.deleteAssignment(assignment.id);
       } else {
         // Update assignment with remaining slots
-        dbService.updateAssignment(assignment.id, {
+        await api.database.updateAssignment(assignment.id, {
           scheduled_slots: updatedSlots,
           ai_rationale: `${assignment.ai_rationale || ''} [Calendar: Slot removed ${formatTime(event.start)} on ${event.start.toISOString().split('T')[0]}]`
         });

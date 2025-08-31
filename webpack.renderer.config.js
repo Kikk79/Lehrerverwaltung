@@ -8,6 +8,8 @@ module.exports = (env, argv) => {
   
   return {
     target: 'electron-renderer',
+    // Prevent webpack from externalizing Node/Electron builtins for the renderer
+    externalsPresets: { node: false, electronRenderer: false },
     entry: './src/renderer/index.tsx',
     mode: argv.mode || 'development',
     output: {
@@ -19,15 +21,17 @@ module.exports = (env, argv) => {
       extensions: ['.tsx', '.ts', '.js'],
       alias: {
         '@shared': path.resolve(__dirname, 'src/shared'),
-        '@renderer': path.resolve(__dirname, 'src/renderer')
+        '@renderer': path.resolve(__dirname, 'src/renderer'),
+        // Avoid importing electron in the renderer bundle
+        'electron': false
       },
       fallback: {
-        "path": require.resolve("path-browserify"),
-        "fs": false,
-        "crypto": false,
-        "buffer": require.resolve("buffer"),
-        "stream": require.resolve("stream-browserify"),
-        "util": require.resolve("util")
+        path: require.resolve('path-browserify'),
+        fs: false,
+        crypto: false,
+        buffer: require.resolve('buffer/'),
+        stream: require.resolve('stream-browserify'),
+        util: require.resolve('util')
       }
     },
     module: {
@@ -77,10 +81,14 @@ module.exports = (env, argv) => {
     ],
     devServer: {
       static: path.join(__dirname, 'dist/renderer'),
-      port: 3001,
+      port: 3000,
       hot: true,
-      historyApiFallback: true
+      historyApiFallback: true,
+      client: {
+        overlay: true
+      }
     },
-    devtool: isProduction ? 'source-map' : 'eval-source-map'
+    // Use source-map in development to avoid CSP violations from eval()
+    devtool: 'source-map'
   };
 };
